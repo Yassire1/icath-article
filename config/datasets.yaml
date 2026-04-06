@@ -1,0 +1,80 @@
+datasets:
+  cmapss:
+    name: "C-MAPSS"
+    domain: "Turbofan Engines"
+    description: "NASA turbofan engine degradation simulation"
+    source_url: "https://data.nasa.gov/download/ff5v-kuh6/application%2Fzip"
+    subsets:
+      - "FD001"
+      - "FD002"
+      - "FD003"
+      - "FD004"
+    num_channels: 21
+    tasks:
+      - "forecasting"
+      - "rul_prediction"
+    failure_rate: 0.20
+    total_samples: 100
+
+  phm_milling:
+    name: "PHM Milling"
+    domain: "CNC Machining"
+    description: "PHM Society 2010 milling machine wear dataset"
+    source_url: "https://phmsociety.org/phm_competition/2010-phm-society-conference-data-challenge/"
+    num_channels: 8
+    tasks:
+      - "anomaly_detection"
+      - "forecasting"
+    failure_rate: 0.15
+    total_samples: 16000
+
+  pu_bearings:
+    name: "Paderborn University Bearings"
+    domain: "Rotating Machinery"
+    description: "Bearing fault detection dataset"
+    source_url: "https://mb.uni-paderborn.de/kat/forschung/datacenter/bearing-datacenter/"
+    num_channels: 4
+    tasks:
+      - "anomaly_detection"
+      - "rul_prediction"
+    failure_rate: 0.32
+    total_samples: 32
+
+  wind_scada:
+    name: "Wind Turbine SCADA"
+    domain: "Wind Energy"
+    description: "SCADA data from operational wind turbines"
+    source_url: "https://www.kaggle.com/datasets/berkerisen/wind-turbine-scada-dataset"
+    num_channels: 52
+    tasks:
+      - "forecasting"
+      - "anomaly_detection"
+    failure_rate: 0.08
+    total_samples: 6000
+
+  mimii:
+    name: "MIMII"
+    domain: "Factory Machinery"
+    description: "Malfunctioning Industrial Machine Investigation and Inspection"
+    source_url: "https://zenodo.org/record/3384388"
+    machine_types:
+      - "fan"
+      - "pump"
+      - "slider"
+      - "valve"
+    num_channels: 8
+    tasks:
+      - "anomaly_detection"
+    failure_rate: 0.10
+    total_samples: 10000
+
+  pronostia:
+    name: "PRONOSTIA"
+    domain: "Bearings"
+    description: "FEMTO-ST bearing degradation dataset"
+    source_url: "https://www.nasa.gov/content/prognostics-center-of-excellence-data-set-repository"
+    num_channels: 3
+    tasks:
+      - "rul_prediction"
+    failure_rate: 1.00
+    total_samples: 17

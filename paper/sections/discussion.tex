@@ -1,0 +1,19 @@
+\subsection{Limitations}
+
+Our study has several limitations. First, we evaluated a subset of available TSFMs; extending the benchmark to include newer models as they emerge would strengthen the analysis. Second, API-based models like TimeGPT introduce reproducibility challenges, as the underlying model architecture and training data are not publicly disclosed. Third, our few-shot experiments used LoRA adaptation, but alternative parameter-efficient fine-tuning methods (e.g., adapters, prompt tuning) may yield different results.
+
+\subsection{Future Work}
+
+The gaps identified in this study motivate several directions for future research:
+
+\textbf{Federated TSFMs:} Our results demonstrate that centralized TSFMs are not ready for industrial deployment. Developing federated learning approaches that enable collaborative training across multiple industrial sites while preserving data privacy is a critical next step.
+
+\textbf{Domain-Specific Pretraining:} The distribution shift between pretraining corpora and industrial data suggests that domain-specific pretraining on industrial sensor data could significantly improve zero-shot performance.
+
+\textbf{Physics-Informed TSFMs:} Incorporating physical constraints and domain knowledge into TSFM architectures could improve RUL prediction accuracy and reduce the dependence on labeled data.
+
+\textbf{Industrial Benchmark Suite:} We advocate for the creation of a standardized industrial TSFM benchmark that captures the diversity of industrial domains, operating conditions, and failure modes.
+
+\subsection{Impact}
+
+The \$50B industrial PdM market cannot afford to deploy models that have not been rigorously evaluated on domain-specific data. Our benchmark provides the first empirical evidence that general-purpose TSFMs require significant adaptation before they can be trusted in industrial settings. This work establishes a baseline for measuring progress toward production-ready predictive maintenance systems and motivates the development of federated, privacy-preserving approaches.

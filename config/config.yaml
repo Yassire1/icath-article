@@ -1,0 +1,67 @@
+project:
+  name: "tsfm-industrial-pdm-benchmark"
+  version: "1.0.0"
+  author: "Yassire Ammouri"
+  wandb_project: "tsfm-pdm-bench"
+
+paths:
+  data_raw: "data/raw"
+  data_processed: "data/processed"
+  results: "results"
+  figures: "results/figures"
+  tables: "results/tables"
+  paper: "paper"
+
+preprocessing:
+  lookback_window: 512
+  forecast_horizon: 96
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  normalization: "standard"
+  imputation: "kalman"
+
+evaluation:
+  scenarios:
+    - "zero_shot"
+    - "few_shot"
+    - "cross_domain"
+  tasks:
+    - "forecasting"
+    - "anomaly_detection"
+    - "rul_prediction"
+  metrics:
+    forecasting:
+      - "mae"
+      - "mse"
+      - "rmse"
+      - "crps"
+    anomaly:
+      - "f1"
+      - "precision"
+      - "recall"
+      - "auc_roc"
+    rul:
+      - "mae"
+      - "rmse"
+      - "c_index"
+
+few_shot:
+  method: "lora"
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.1
+  train_samples_ratio: 0.01
+  epochs: 10
+  learning_rate: 1e-4
+  batch_size: 32
+
+hardware:
+  device: "cuda"
+  mixed_precision: true
+  num_workers: 4
+  pin_memory: true
+
+reproducibility:
+  seed: 42
+  deterministic: true

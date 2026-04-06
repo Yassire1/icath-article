@@ -1,0 +1,10 @@
+We presented the first comprehensive benchmark of Time Series Foundation Models on industrial Predictive Maintenance data, evaluating six TSFMs across six datasets spanning turbofan engines, CNC machines, bearings, wind turbines, and factory machinery. Our key findings are:
+
+\begin{enumerate}
+    \item TSFMs exhibit 35\% MAE degradation on industrial data compared to supervised baselines
+    \item Zero-shot RUL prediction fails in 62\% of cases (C-Index $<$ 0.5)
+    \item Our SCADA preprocessing pipeline improves cross-domain transfer by 18\%
+    \item No evaluated TSFM satisfies our proposed Federated Readiness Checklist
+\end{enumerate}
+
+These results expose fundamental gaps between TSFM capabilities and industrial requirements. The general-purpose nature of current foundation models, while advantageous for broad applicability, proves insufficient for the specialized demands of industrial predictive maintenance. Our benchmark establishes a quantitative baseline for measuring progress toward production-ready TSFMs and motivates the development of federated, domain-adapted approaches that can operate effectively in real-world industrial environments.

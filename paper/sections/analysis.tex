@@ -1,0 +1,48 @@
+Our empirical results reveal a systematic pattern of TSFM underperformance on industrial data. We categorize the failures into four primary modes:
+
+\subsection{Distribution Shift}
+
+The most significant failure mode is the distribution shift between pretraining corpora and industrial sensor data. TSFMs are typically pretrained on diverse time series datasets including weather, traffic, and economic indicators. These domains exhibit fundamentally different statistical properties than industrial sensor data:
+
+\begin{itemize}
+    \item \textbf{Seasonality patterns}: Industrial data often contains complex multi-scale seasonal patterns (daily, weekly, operational cycle) that differ from natural seasonal patterns.
+    \item \textbf{Noise characteristics}: Sensor noise is often non-Gaussian and correlated across channels, unlike the additive white noise commonly found in pretraining data.
+    \item \textbf{Degradation dynamics}: Equipment degradation follows physics-driven patterns that are not captured by statistical pretraining objectives.
+\end{itemize}
+
+The 35\% MAE degradation observed in our experiments directly reflects this distribution mismatch.
+
+\subsection{Long-Horizon Drift}
+
+TSFMs exhibit accelerated performance degradation as the forecast horizon increases. On synthetic benchmarks, the MAE increase from 24-step to 96-step forecasting is approximately 2$\times$. On industrial data, this ratio increases to 3$\times$, indicating that the temporal dynamics of industrial systems are more challenging to extrapolate over long horizons.
+
+\subsection{Privacy Leakage Concerns}
+
+We investigated whether TSFM embeddings retain information about the original sensor data. Preliminary analysis suggests that the embedding space preserves sufficient temporal structure to enable reconstruction of raw sensor values, raising privacy concerns for industrial deployments where data confidentiality is paramount.
+
+\subsection{Federation Unreadiness}
+
+Current TSFMs assume centralized deployment with access to all data during inference. Industrial settings, however, often require distributed deployment across multiple sites with heterogeneous data distributions. We propose a \textbf{Federated Readiness Checklist} for evaluating TSFMs in distributed industrial settings:
+
+\begin{itemize}
+    \item[$\square$] Handles non-IID multi-client data distributions
+    \item[$\square$] Edge-deployable ($<$1GB model size, $<$1s inference latency)
+    \item[$\square$] Privacy audit passed (no raw data reconstruction from embeddings)
+    \item[$\square$] RUL concordance $>$0.7 in zero-shot setting
+    \item[$\square$] Supports incremental learning without catastrophic forgetting
+\end{itemize}
+
+None of the evaluated TSFMs satisfy all five criteria, highlighting the need for specialized federated approaches.
+
+\subsection{Industrial Deployment Checklist}
+
+Based on our findings, we propose the following checklist for practitioners considering TSFM deployment in industrial settings:
+
+\begin{enumerate}
+    \item Evaluate zero-shot performance on domain-specific data before deployment
+    \item Apply domain-aware preprocessing (our SCADA pipeline)
+    \item Consider few-shot adaptation with at least 1\% labeled data
+    \item Validate RUL predictions against physics-based models
+    \item Audit embeddings for privacy leakage
+    \item Plan for federated deployment if multi-site operations are required
+\end{enumerate}

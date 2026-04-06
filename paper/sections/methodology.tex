@@ -1,0 +1,63 @@
+\subsection{Datasets}
+
+We evaluate TSFMs on six publicly available industrial PdM datasets spanning multiple domains and failure modes. Table~\ref{tab:datasets} summarizes the dataset characteristics.
+
+\begin{table}[htbp]
+\caption{Industrial PdM Dataset Summary}
+\label{tab:datasets}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+Dataset & Domain & Samples & Channels & Tasks & Failure Rate \\
+\midrule
+C-MAPSS & Turbofan & 100 & 21 & RUL/Forecast & 20\% \\
+PHM Milling & CNC & 16k & 8 & Anomaly & 15\% \\
+PU Bearings & Rotating & 32 & 4 & RUL/Anomaly & 32\% \\
+Wind SCADA & Turbines & 6k & 52 & Forecast & 8\% \\
+MIMII & Factory & 10k & 8 & Anomaly & 10\% \\
+PRONOSTIA & Bearings & 17 & 3 & RUL & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The C-MAPSS dataset~\cite{saxena2008cmapss} contains simulated run-to-failure trajectories of turbofan engines under varying operating conditions. Each trajectory includes 21 sensor channels measuring temperature, pressure, and flow rates. The PHM 2010 Milling dataset~\cite{phm2010milling} captures tool wear progression during CNC machining operations with 8 sensor channels including vibration and acoustic emission. The Paderborn University bearing dataset~\cite{lessmeier2016paderborn} provides high-frequency vibration data from bearings under controlled fault conditions. Wind SCADA data captures operational parameters from wind turbines, while MIMII~\cite{mimii2019} provides audio-based anomaly detection data from factory machinery.
+
+\subsection{Models}
+
+We evaluate six TSFMs representing different architectural approaches:
+\begin{itemize}
+    \item \textbf{MOMENT}~\cite{goswami2024moment}: 385M parameters, masked pretraining, multivariate support
+    \item \textbf{Sundial}~\cite{ekambaram2024sundial}: Probabilistic forecasting with uncertainty quantification
+    \item \textbf{Chronos}~\cite{ansari2024chronos}: Token-based approach inspired by LLMs
+    \item \textbf{Time-MoE}~\cite{time_moe2024}: Mixture-of-experts for scalable temporal modeling
+    \item \textbf{Lag-Llama,}~\cite{lag_llama2023}: Autoregressive language modeling for time series
+    \item \textbf{TimeGPT}~\cite{garza2023timegpt}: API-based zero-shot forecasting service
+\end{itemize}
+
+We compare against three strong baselines: PatchTST~\cite{nie2022patchtst}, Autoformer~\cite{wu2021autoformer}, and a vanilla Transformer~\cite{vaswani2017attention}, all trained in supervised fashion on each dataset.
+
+\subsection{SCADA Preprocessing Pipeline}
+
+Our preprocessing pipeline addresses key challenges in industrial time series data:
+
+\textbf{Chronological Splits:} We enforce strict chronological train/validation/test splits (70/15/15) with no shuffling to prevent temporal data leakage---a common pitfall in time series evaluation.
+
+\textbf{Per-Sensor Normalization:} Industrial sensors operate at different scales and exhibit different noise characteristics. We apply Z-score normalization per sensor family, fitting statistics exclusively on training data to prevent information leakage.
+
+\textbf{Kalman-Based Imputation:} Missing sensor readings are common in industrial settings due to sensor failures or communication drops. We employ forward-fill followed by linear interpolation, with column-mean fallback for persistent missing values.
+
+\textbf{Sequence Construction:} We construct sliding window sequences with a lookback window of 512 time steps and a forecast horizon of 96 steps, matching the context length of most TSFMs.
+
+\textbf{RUL Labeling:} For degradation datasets, we compute piecewise linear RUL labels capped at a maximum of 125 cycles, following the standard C-MAPSS protocol.
+
+\subsection{Evaluation Protocol}
+
+We evaluate models across three scenarios:
+
+\textbf{Zero-Shot:} Direct inference without any task-specific adaptation, testing the claimed transfer capabilities of TSFMs.
+
+\textbf{Few-Shot:} LoRA~\cite{hu2021lora} adaptation using only 1\% of training data (rank $r=16$, $\alpha=32$), simulating resource-constrained industrial settings where labeled data is scarce.
+
+\textbf{Cross-Domain:} Training on one dataset and testing on another, evaluating the generalization capability across different industrial domains.
+
+We report task-specific metrics: MAE, MSE, RMSE, and CRPS for forecasting; F1-score, AUC-ROC, and AUC-PR for anomaly detection; and MAE, RMSE, and Concordance Index (C-Index) for RUL prediction.
