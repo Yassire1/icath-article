@@ -6,13 +6,13 @@ from typing import Dict, Optional
 from .base import BaseTSFMWrapper
 from .moment import MOMENTWrapper
 from .chronos import ChronosWrapper
-from .timegpt import TimeGPTWrapper
+from .lag_llama import LagLlamaWrapper
 from .patchtst import PatchTSTWrapper
 
 MODEL_REGISTRY = {
     'moment': MOMENTWrapper,
     'chronos': ChronosWrapper,
-    'timegpt': TimeGPTWrapper,
+    'lag_llama': LagLlamaWrapper,
     'patchtst': PatchTSTWrapper,
 }
 
@@ -41,6 +41,6 @@ __all__ = [
     'BaseTSFMWrapper',
     'MOMENTWrapper',
     'ChronosWrapper',
-    'TimeGPTWrapper',
+    'LagLlamaWrapper',
     'PatchTSTWrapper',
 ]

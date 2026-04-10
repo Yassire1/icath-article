@@ -1,16 +1,17 @@
 \begin{table}[htbp]
-\caption{Zero-Shot MAE Results (lower is better)}
+\caption{Zero-Shot MAE Results (lower is better). Results to be filled after experiments.}
 \label{tab:zero_shot_mae}
 \centering
-\begin{tabular}{lcccccc|c}
+\begin{tabular}{lccc|c}
 \toprule
-Model & C-MAPSS & PHM & PU & SCADA & MIMII & PRON & Mean \\
+Model & C-MAPSS & Wind SCADA & MIMII & Mean \\
 \midrule
-PatchTST & 0.12 & 0.21 & 0.18 & 0.25 & 0.15 & 0.22 & 0.19 \\
-MOMENT & 0.15 & 0.28 & 0.24 & 0.37 & 0.19 & 0.31 & 0.26 \\
-Sundial & 0.17 & 0.31 & 0.26 & 0.41 & 0.22 & 0.35 & 0.29 \\
-Chronos & 0.16 & 0.29 & 0.25 & 0.39 & 0.20 & 0.33 & 0.27 \\
-TimeGPT & 0.14 & 0.27 & 0.23 & 0.33 & 0.18 & 0.29 & 0.24 \\
+PatchTST$^{\dagger}$ & [TBD] & [TBD] & [TBD] & [TBD] \\
+MOMENT & [TBD] & [TBD] & [TBD] & [TBD] \\
+Chronos & [TBD] & [TBD] & [TBD] & [TBD] \\
+Lag-Llama & [TBD] & [TBD] & [TBD] & [TBD] \\
 \bottomrule
 \end{tabular}
+\vspace{2pt}
+\footnotesize{$^{\dagger}$PatchTST requires supervised training; evaluated in supervised setting for comparison.}
 \end{table}

@@ -110,17 +110,6 @@ class MOMENTWrapper(BaseTSFMWrapper):
             except Exception:
                 pass
 
-        target_modules = ["query", "value"]
-        if hasattr(self.model, 'config') and hasattr(self.model.config, 'hidden_size'):
-            try:
-                named_modules = [n for n, _ in self.model.named_modules()]
-                if any('q_proj' in n for n in named_modules):
-                    target_modules = ["q_proj", "v_proj"]
-                elif any('attn.query' in n for n in named_modules):
-                    target_modules = ["attn.query", "attn.value"]
-            except Exception:
-                pass
-
         lora_config = LoraConfig(
             r=lora_r,
             lora_alpha=lora_alpha,

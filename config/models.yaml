@@ -1,6 +1,11 @@
+# Active TSFM models for this benchmark (3 open-source TSFMs + 1 supervised baseline)
+# Removed from scope: Sundial (limited public access), Time-MoE (implementation issues),
+# TimeGPT (closed API, non-reproducible)
+
 tsfm_models:
   moment:
     name: "MOMENT"
+    active: true
     type: "foundation"
     hub_id: "AutonLab/MOMENT-1-large"
     paper: "arXiv:2402.03885"
@@ -16,23 +21,9 @@ tsfm_models:
       - "anomaly_detection"
       - "classification"
 
-  sundial:
-    name: "Sundial"
-    type: "foundation"
-    hub_id: "Salesforce/sundial-base"
-    paper: "arXiv:2502.00816"
-    parameters: "200M"
-    max_context: 1024
-    capabilities:
-      multivariate: true
-      probabilistic: true
-      zero_shot: true
-      fine_tunable: true
-    tasks:
-      - "forecasting"
-
   chronos:
     name: "Chronos"
+    active: true
     type: "foundation"
     hub_id: "amazon/chronos-t5-large"
     paper: "arXiv:2403.07815"
@@ -46,18 +37,21 @@ tsfm_models:
     tasks:
       - "forecasting"
 
-  time_moe:
-    name: "Time-MoE"
+  lag_llama:
+    name: "Lag-Llama"
+    active: true
     type: "foundation"
-    hub_id: "Maple728/TimeMoE-50M"
-    paper: "arXiv:2409.02310"
-    parameters: "50M"
-    max_context: 512
+    hub_id: "time-series-foundation-models/Lag-Llama"
+    paper: "arXiv:2310.08278"
+    parameters: "7M"
+    max_context: 32
     capabilities:
-      multivariate: true
-      probabilistic: false
+      multivariate: false
+      probabilistic: true
       zero_shot: true
       fine_tunable: true
+    tasks:
+      - "forecasting"
     tasks:
       - "forecasting"
 
@@ -76,25 +70,10 @@ tsfm_models:
     tasks:
       - "forecasting"
 
-  timegpt:
-    name: "TimeGPT"
-    type: "api"
-    api_provider: "nixtla"
-    paper: "arXiv:2310.03589"
-    parameters: "unknown"
-    max_context: 1024
-    capabilities:
-      multivariate: true
-      probabilistic: true
-      zero_shot: true
-      fine_tunable: true
-    tasks:
-      - "forecasting"
-      - "anomaly_detection"
-
 baseline_models:
   patchtst:
     name: "PatchTST"
+    active: true
     type: "baseline"
     paper: "ICLR 2023"
     framework: "neuralforecast"
@@ -108,42 +87,6 @@ baseline_models:
       e_layers: 3
       d_ff: 256
       dropout: 0.2
-      learning_rate: 1e-4
-      max_steps: 1000
-      batch_size: 32
-
-  autoformer:
-    name: "Autoformer"
-    type: "baseline"
-    paper: "NeurIPS 2021"
-    framework: "neuralforecast"
-    config:
-      input_size: 512
-      h: 96
-      hidden_size: 128
-      n_heads: 8
-      e_layers: 2
-      d_layers: 1
-      d_ff: 256
-      factor: 3
-      dropout: 0.1
-      learning_rate: 1e-4
-      max_steps: 1000
-      batch_size: 32
-
-  transformer:
-    name: "Vanilla Transformer"
-    type: "baseline"
-    paper: "NeurIPS 2017"
-    framework: "neuralforecast"
-    config:
-      input_size: 512
-      h: 96
-      hidden_size: 128
-      n_heads: 8
-      e_layers: 2
-      d_ff: 256
-      dropout: 0.1
       learning_rate: 1e-4
       max_steps: 1000
       batch_size: 32

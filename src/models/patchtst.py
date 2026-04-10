@@ -5,7 +5,8 @@ Paper: ICLR 2023
 
 import torch
 import numpy as np
-from typing import Dict, Union
+import pandas as pd
+from typing import Dict, Optional, Union
 from .base import BaseTSFMWrapper
 
 
@@ -53,6 +54,21 @@ class PatchTSTWrapper(BaseTSFMWrapper):
         except ImportError:
             raise ImportError("Please install neuralforecast: pip install neuralforecast")
 
+    def _prepare_neuralforecast_data(self, X: np.ndarray) -> pd.DataFrame:
+        """Convert (n_samples, seq_len, n_channels) array to neuralforecast DataFrame.
+
+        Averages channels to produce a univariate representation.
+        Returns DataFrame with columns: unique_id (str), ds (datetime), y (float).
+        """
+        n_samples, seq_len, n_channels = X.shape
+        X_uni = X.mean(axis=-1)  # (n_samples, seq_len)
+        base_ts = pd.date_range("2020-01-01", periods=seq_len, freq="H")
+        dfs = [
+            pd.DataFrame({"unique_id": str(i), "ds": base_ts, "y": X_uni[i]})
+            for i in range(n_samples)
+        ]
+        return pd.concat(dfs, ignore_index=True)
+
     def fit(
         self,
         X_train: Union[np.ndarray, torch.Tensor],
@@ -84,19 +100,39 @@ class PatchTSTWrapper(BaseTSFMWrapper):
         horizon: int = 96,
         **kwargs
     ) -> Dict[str, np.ndarray]:
-        """Generate forecasts"""
+        """Generate forecasts using the trained NeuralForecast model."""
         if isinstance(X, torch.Tensor):
             X = X.cpu().numpy()
 
-        batch_size, seq_len, n_channels = X.shape
+        if not hasattr(self, 'nf'):
+            raise RuntimeError(
+                "PatchTST requires training before prediction. "
+                "Call fit() first — PatchTST is a supervised baseline, not a zero-shot model."
+            )
 
-        # Naive forecast: repeat last value
-        last_values = X[:, -1:, :]
-        predictions = np.repeat(last_values, horizon, axis=1)
+        n_samples, seq_len, n_channels = X.shape
+        df = self._prepare_neuralforecast_data(X)
+
+        forecast_df = self.nf.predict(df=df)
+
+        # neuralforecast predict() returns a DataFrame with columns:
+        # unique_id, ds, PatchTST (the model name)
+        model_col = [c for c in forecast_df.columns if c not in ("unique_id", "ds")][0]
+        unique_ids = [str(i) for i in range(n_samples)]
+        median_preds = np.stack(
+            [
+                forecast_df[forecast_df["unique_id"] == uid][model_col].values[:horizon]
+                for uid in unique_ids
+            ],
+            axis=0,
+        )  # (n_samples, horizon)
+
+        # Broadcast univariate forecast to multivariate output shape
+        predictions = np.stack([median_preds] * n_channels, axis=-1)  # (n_samples, horizon, n_channels)
 
         return {
-            'predictions': predictions,
-            'model': self.model_name
+            "predictions": predictions,
+            "model": self.model_name,
         }
 
     def few_shot_adapt(

@@ -1,17 +1,14 @@
 \begin{table}[htbp]
-\caption{Industrial PdM Dataset Summary}
+\caption{Industrial PdM Datasets Used in This Benchmark}
 \label{tab:datasets}
 \centering
 \begin{tabular}{lccccc}
 \toprule
 Dataset & Domain & Samples & Channels & Tasks & Failure Rate \\
 \midrule
-C-MAPSS & Turbofan & 100 & 21 & RUL/Forecast & 20\% \\
-PHM Milling & CNC & 16k & 8 & Anomaly & 15\% \\
-PU Bearings & Rotating & 32 & 4 & RUL/Anomaly & 32\% \\
-Wind SCADA & Turbines & 6k & 52 & Forecast & 8\% \\
-MIMII & Factory & 10k & 8 & Anomaly & 10\% \\
-PRONOSTIA & Bearings & 17 & 3 & RUL & 100\% \\
+C-MAPSS~\cite{saxena2008cmapss} & Turbofan & 100 runs & 21 & Forecast / RUL & 20\% \\
+Wind SCADA & Wind turbines & 6k & 52 & Forecast & 8\% \\
+MIMII~\cite{mimii2019} & Factory machinery & 10k & 8 & Anomaly detection & 10\% \\
 \bottomrule
 \end{tabular}
 \end{table}

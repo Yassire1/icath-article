@@ -1,6 +1,7 @@
 datasets:
   cmapss:
     name: "C-MAPSS"
+    active: true
     domain: "Turbofan Engines"
     description: "NASA turbofan engine degradation simulation"
     source_url: "https://data.nasa.gov/download/ff5v-kuh6/application%2Fzip"
@@ -18,6 +19,7 @@ datasets:
 
   phm_milling:
     name: "PHM Milling"
+    active: false
     domain: "CNC Machining"
     description: "PHM Society 2010 milling machine wear dataset"
     source_url: "https://phmsociety.org/phm_competition/2010-phm-society-conference-data-challenge/"
@@ -30,6 +32,7 @@ datasets:
 
   pu_bearings:
     name: "Paderborn University Bearings"
+    active: false
     domain: "Rotating Machinery"
     description: "Bearing fault detection dataset"
     source_url: "https://mb.uni-paderborn.de/kat/forschung/datacenter/bearing-datacenter/"
@@ -42,6 +45,7 @@ datasets:
 
   wind_scada:
     name: "Wind Turbine SCADA"
+    active: true
     domain: "Wind Energy"
     description: "SCADA data from operational wind turbines"
     source_url: "https://www.kaggle.com/datasets/berkerisen/wind-turbine-scada-dataset"
@@ -54,6 +58,7 @@ datasets:
 
   mimii:
     name: "MIMII"
+    active: true
     domain: "Factory Machinery"
     description: "Malfunctioning Industrial Machine Investigation and Inspection"
     source_url: "https://zenodo.org/record/3384388"
@@ -70,6 +75,7 @@ datasets:
 
   pronostia:
     name: "PRONOSTIA"
+    active: false
     domain: "Bearings"
     description: "FEMTO-ST bearing degradation dataset"
     source_url: "https://www.nasa.gov/content/prognostics-center-of-excellence-data-set-repository"

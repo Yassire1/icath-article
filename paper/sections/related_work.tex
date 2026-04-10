@@ -1,40 +1,15 @@
 \subsection{Time Series Foundation Models}
 
-The emergence of foundation models for time series forecasting represents a paradigm shift from task-specific models to general-purpose temporal reasoning systems. MOMENT~\cite{goswami2024moment} introduced a 385M-parameter model pretrained on masked reconstruction across diverse time series corpora, demonstrating zero-shot transfer capabilities. Sundial~\cite{ekambaram2024sundial} proposed a probabilistic forecasting foundation model with support for uncertainty quantification. Chronos~\cite{ansari2024chronos} leveraged tokenization strategies inspired by large language models, achieving strong zero-shot performance across multiple forecasting benchmarks. Time-MoE~\cite{time_moe2024} employed mixture-of-experts architectures for scalable temporal modeling, while Lag-Llama
-~\cite{lag_llama2023} adapted autoregressive language modeling techniques to time series forecasting.
+The emergence of foundation models for time series forecasting represents a paradigm shift from task-specific models to general-purpose temporal reasoning systems. MOMENT~\cite{goswami2024moment} introduced a 385M-parameter model pretrained on masked reconstruction across diverse time series corpora, demonstrating zero-shot transfer capabilities. Sundial~\cite{ekambaram2024sundial} proposed a probabilistic forecasting foundation model with support for uncertainty quantification. Chronos~\cite{ansari2024chronos} leveraged tokenization strategies inspired by large language models, achieving strong zero-shot performance across multiple forecasting benchmarks. Time-MoE~\cite{time_moe2024} employed mixture-of-experts architectures for scalable temporal modeling, while Lag-Llama~\cite{lag_llama2023} adapted autoregressive language modeling techniques to time series forecasting with a focus on probabilistic inference.
 
-TimeGPT~\cite{garza2023timegpt}, developed by Nixtla, offers an API-based forecasting service that claims zero-shot capabilities across diverse domains. While these models demonstrate promising results on standard benchmarks, their evaluation has been largely confined to clean, well-curated datasets such as ETTh, ETTm, and Weather~\cite{zhou2021informer}.
+While these models demonstrate promising results on standard benchmarks, their evaluation has been largely confined to clean, well-curated datasets such as ETTh, ETTm, and Weather~\cite{zhou2021informer}.
 
 \subsection{Industrial Predictive Maintenance Benchmarks}
 
-Industrial PdM has a rich history of benchmark datasets. The C-MAPSS dataset~\cite{saxena2008cmapss}, developed by NASA, provides simulated turbofan engine degradation data and has become the de facto standard for RUL prediction research. The PHM Society has organized multiple data challenges, including the 2010 milling machine wear dataset~\cite{phm2010milling}. The Paderborn University bearing dataset~\cite{lessmeier2016paderborn} and the PRONOSTIA dataset~\cite{femto2012pronostia} provide real-world bearing degradation data under various operating conditions.
+Industrial PdM has a rich history of benchmark datasets. The C-MAPSS dataset~\cite{saxena2008cmapss}, developed by NASA, provides simulated turbofan engine degradation data and has become the de facto standard for RUL prediction research. MIMII~\cite{mimii2019} provides audio-based anomaly detection for factory machinery.
 
-Despite the availability of these datasets, no systematic evaluation of modern TSFMs exists on industrial PdM data. Prior work has primarily focused on traditional deep learning approaches such as LSTMs~\cite{zhao2019lstm}, CNNs~\cite{zheng2017cnn}, and more recently, transformer-based models like PatchTST~\cite{nie2022patchtst} and Autoformer~\cite{wu2021autoformer}.
+Prior work has primarily focused on traditional deep learning approaches such as LSTMs~\cite{zhao2019lstm}, CNNs~\cite{zheng2017cnn}, and more recently, transformer-based models like PatchTST~\cite{nie2022patchtst} and Autoformer~\cite{wu2021autoformer}.
 
-\subsection{Benchmarking Efforts}
+\subsection{Benchmarking Efforts and Positioning}
 
-Recent benchmarking efforts have begun to address the evaluation gap in time series foundation models. FoundTS~\cite{foundts2024} provided a unified framework for evaluating TSFMs on forecasting tasks, while GIFT-Eval~\cite{gifteval2024} introduced a generalizable evaluation framework. However, these benchmarks focus on academic datasets and do not address the unique challenges of industrial PdM, including non-IID distributions, privacy constraints, and sparse failure labels.
-
-\subsection{Gap Identification}
-
-The critical gap this paper addresses is the lack of empirical evidence regarding TSFM performance on real industrial data. While TSFMs excel on standard benchmarks, their behavior on industrial sensor data---characterized by non-stationarity, missing values, multi-variate correlations, and domain-specific noise patterns---remains unknown. Our work bridges this gap by providing the first comprehensive evaluation of TSFMs on industrial PdM datasets, exposing fundamental limitations that motivate the development of specialized approaches.
-
-Table~\ref{tab:capabilities} summarizes the capabilities of major TSFMs against key PdM requirements, revealing that no existing model has been tested on industrial data.
-
-\begin{table}[htbp]
-\caption{TSFM Capabilities vs. PdM Requirements}
-\label{tab:capabilities}
-\centering
-\begin{tabular}{lcccc}
-\toprule
-Model & Multivariate & Probabilistic & Long Context & Industrial Tested \\
-\midrule
-MOMENT & \checkmark & \checkmark & 512 & No \\
-Sundial & \checkmark & \checkmark & 1024 & No \\
-Chronos & \checkmark & \checkmark & 512 & No \\
-Time-MoE & \checkmark & \checkmark & 512 & No \\
-Lag-Llama. & \checkmark & \checkmark & 32 & No \\
-TimeGPT & \checkmark & \checkmark & 1024 & No \\
-\bottomrule
-\end{tabular}
-\end{table}
+Recent benchmarking efforts have evaluated TSFMs at scale. FoundTS~\cite{foundts2024} provided a unified framework covering forecasting tasks, while GIFT-Eval~\cite{gifteval2024} introduced a generalizable evaluation framework. Most directly related to our work, Dinten and Zorrilla~\cite{dinten2025} evaluated TSFMs specifically for C-MAPSS RUL prediction. Our contribution complements these works by extending the evaluation to multiple open-source TSFMs across three distinct industrial sensor modalities (turbofan degradation, SCADA monitoring, and acoustic anomaly detection) with a focus on practical deployment considerations.

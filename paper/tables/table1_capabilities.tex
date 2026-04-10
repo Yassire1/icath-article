@@ -1,17 +1,15 @@
 \begin{table}[htbp]
-\caption{TSFM Capabilities vs. PdM Requirements}
+\caption{TSFM Capabilities vs.\ PdM Requirements (evaluated models only)}
 \label{tab:capabilities}
 \centering
 \begin{tabular}{lcccc}
 \toprule
-Model & Multivariate & Probabilistic & Long Context & Industrial Tested \\
+Model & Multivariate & Probabilistic & Context & Fine-tunable \\
 \midrule
-MOMENT & \checkmark & \checkmark & 512 & No \\
-Sundial & \checkmark & \checkmark & 1024 & No \\
-Chronos & \checkmark & \checkmark & 512 & No \\
-Time-MoE & \checkmark & \checkmark & 512 & No \\
-Lag-Llama & \checkmark & \checkmark & 32 & No \\
-TimeGPT & \checkmark & \checkmark & 1024 & No \\
+MOMENT & \checkmark & \checkmark & 512 & \checkmark \\
+Chronos & $\times$ & \checkmark & 512 & $\times$ \\
+Lag-Llama & $\times$ & \checkmark & 32 & \checkmark \\
+PatchTST & \checkmark & $\times$ & 512 & \checkmark \\
 \bottomrule
 \end{tabular}
 \end{table}

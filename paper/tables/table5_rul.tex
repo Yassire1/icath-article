@@ -1,15 +1,18 @@
 \begin{table}[htbp]
-\caption{RUL Prediction C-Index (higher is better)}
+\caption{C-MAPSS Cross-Condition Transfer MAE (train on FD001, evaluate on FD002--FD004).
+Results to be filled after experiments.}
 \label{tab:rul}
 \centering
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-Model & Zero-Shot & Few-Shot & Supervised \\
+Model & FD001 & FD002 & FD003 & FD004 \\
 \midrule
-MOMENT & 0.41 & 0.58 & 0.73 \\
-Sundial & 0.38 & 0.55 & 0.71 \\
-Chronos & 0.43 & 0.60 & 0.74 \\
-PatchTST & - & - & 0.76 \\
+PatchTST$^{\dagger}$ & [TBD] & [TBD] & [TBD] & [TBD] \\
+MOMENT & [TBD] & [TBD] & [TBD] & [TBD] \\
+Chronos & [TBD] & [TBD] & [TBD] & [TBD] \\
+Lag-Llama & [TBD] & [TBD] & [TBD] & [TBD] \\
 \bottomrule
 \end{tabular}
+\vspace{2pt}
+\footnotesize{$^{\dagger}$PatchTST trained on FD001 training split only.}
 \end{table}

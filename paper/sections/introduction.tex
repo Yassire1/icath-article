@@ -1,23 +1,22 @@
-Industrial systems fail unpredictably, costing over \$50 billion annually in unplanned downtime~\cite{mckinsey2023}. Predictive Maintenance (PdM) leverages sensor data to forecast equipment failures before they occur, enabling proactive interventions that reduce costs and improve safety. Recent advances in Time Series Foundation Models (TSFMs)---large models pretrained on internet-scale temporal data---promise zero-shot transfer across domains without task-specific training. Models such as MOMENT~\cite{goswami2024moment}, Chronos~\cite{ansari2024chronos}, and TimeGPT~\cite{garza2023timegpt} have demonstrated impressive performance on standard forecasting benchmarks.
+Industrial systems fail unpredictably, costing significant revenue in unplanned downtime~\cite{mckinsey2023}. Predictive Maintenance (PdM) leverages sensor data to forecast equipment failures before they occur, enabling proactive interventions that reduce costs and improve safety. Recent advances in Time Series Foundation Models (TSFMs)---large models pretrained on internet-scale temporal data---promise zero-shot transfer across domains without task-specific training. Models such as MOMENT~\cite{goswami2024moment}, Chronos~\cite{ansari2024chronos}, and Lag-Llama~\cite{rasul2024lagllama} have demonstrated strong performance on standard forecasting benchmarks.
 
 However, industrial PdM poses unique challenges that are absent from standard academic benchmarks:
 \begin{itemize}
-    \item \textbf{Non-IID distributions}: Sensor data varies significantly across machines, operating conditions, and deployment sites, violating the independent and identically distributed assumption that most TSFMs rely upon.
-    \item \textbf{Privacy constraints}: Industrial sensor data often cannot leave factory premises due to proprietary and security concerns, limiting cloud-based model deployment.
+    \item \textbf{Non-IID distributions}: Sensor data varies significantly across machines, operating conditions, and deployment sites.
     \item \textbf{Sparse failure labels}: Equipment failures are rare events, creating severe class imbalance that challenges supervised learning approaches.
-    \item \textbf{Multi-variate sensor fusion}: Modern industrial systems generate data from dozens of correlated sensors that must be jointly modeled to capture system-level degradation patterns.
+    \item \textbf{Multi-variate sensor fusion}: Modern industrial systems generate data from dozens of correlated sensors.
+    \item \textbf{Cross-condition variability}: Models trained or calibrated on one operating condition may degrade under different loads or fault modes.
 \end{itemize}
 
-Despite these challenges, no systematic evaluation of TSFMs exists for industrial PdM scenarios. Existing benchmarks such as FoundTS~\cite{foundts2024} and GIFT-Eval~\cite{gifteval2024} focus on clean, academic datasets that fail to capture the realities of industrial deployment. This gap between benchmark performance and industrial applicability remains unquantified.
+Recent work has begun evaluating TSFMs in this space. FoundTS~\cite{foundts2024} and TSFM-Bench provide broad TSFM comparisons, while Dinten and Zorrilla~\cite{dinten2025} specifically evaluate TSFMs on C-MAPSS RUL prediction. Our work contributes a complementary, reproducible evaluation focused on open-source models across a wider set of industrial fault scenarios.
 
 \subsection{Contributions}
 
-This paper makes four key contributions:
+This paper makes three contributions:
 \begin{enumerate}
-    \item \textbf{First industrial PdM benchmark} of six state-of-the-art TSFMs across forecasting, anomaly detection, and Remaining Useful Life (RUL) prediction tasks on six public industrial datasets.
-    \item \textbf{Novel SCADA-optimized preprocessing pipeline} that handles domain-specific gaps and improves cross-domain transfer performance by 18\%.
-    \item \textbf{Taxonomy of TSFM industrial failures}: We document a 35\% MAE degradation on industrial data compared to benchmark performance, and a 62\% failure rate in zero-shot RUL prediction.
-    \item \textbf{Federated readiness assessment} exposing privacy and edge deployment limitations that prevent current TSFMs from being deployed in real industrial settings.
+    \item \textbf{Empirical benchmark} of three open-source TSFMs and one supervised baseline on three public industrial PdM datasets, covering zero-shot and few-shot evaluation scenarios.
+    \item \textbf{Cross-condition transfer study} measuring TSFM generalization across the four C-MAPSS operating condition subsets (FD001--FD004).
+    \item \textbf{Deployment efficiency analysis} comparing model size, GPU memory requirements, and inference latency to characterize suitability for edge versus cloud PdM deployments.
 \end{enumerate}
 
-This work establishes the empirical foundation for developing industrially-robust TSFMs, revealing why current general-purpose models fail in real-world deployment scenarios and motivating the need for specialized approaches.
+All code, preprocessing scripts, and experiment configurations are released publicly to support reproducibility.
