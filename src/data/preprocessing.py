@@ -114,11 +114,18 @@ class SCADAPreprocessor:
         X, y = [], []
         n = len(data)
 
-        for i in range(n - self.lookback - self.horizon + 1):
-            X.append(data[i:i + self.lookback])
-            if targets is not None:
+        if targets is not None:
+            # Target-based tasks (e.g., RUL): one label per lookback window.
+            # Use the shared valid length to avoid indexing past targets.
+            max_start = min(n, len(targets)) - self.lookback
+            for i in range(max(0, max_start)):
+                X.append(data[i:i + self.lookback])
                 y.append(targets[i + self.lookback])
-            else:
+        else:
+            # Forecasting tasks: predict a horizon-sized future slice.
+            max_start = n - self.lookback - self.horizon + 1
+            for i in range(max(0, max_start)):
+                X.append(data[i:i + self.lookback])
                 y.append(data[i + self.lookback:i + self.lookback + self.horizon])
 
         return np.array(X), np.array(y)
@@ -169,9 +176,9 @@ class SCADAPreprocessor:
                 splits['train'], splits['val'], splits['test']
             )
 
-            X_tr, y_tr = self._create_sequences(train_n, splits['train_targets'][self.lookback:])
-            X_va, y_va = self._create_sequences(val_n, splits['val_targets'][self.lookback:])
-            X_te, y_te = self._create_sequences(test_n, splits['test_targets'][self.lookback:])
+            X_tr, y_tr = self._create_sequences(train_n, splits['train_targets'])
+            X_va, y_va = self._create_sequences(val_n, splits['val_targets'])
+            X_te, y_te = self._create_sequences(test_n, splits['test_targets'])
 
             if len(X_tr) > 0:
                 all_X_train.append(X_tr)
