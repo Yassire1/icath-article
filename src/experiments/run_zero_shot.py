@@ -69,8 +69,8 @@ def run_zero_shot_experiment(
                 f"{dataset_name}/{model_name}/{k}": v
                 for k, v in metrics.items()
             })
-        except:
-            pass
+        except Exception as e:
+            print(f"WandB logging skipped: {e}")
 
     return {
         'model': model_name,
@@ -111,8 +111,8 @@ def run_all_zero_shot(
                     'task': task
                 }
             )
-        except:
-            pass
+        except Exception as e:
+            print(f"WandB init skipped: {e}")
 
     all_results = []
 

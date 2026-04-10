@@ -73,7 +73,8 @@ class MOMENTWrapper(BaseTSFMWrapper):
             try:
                 outputs = self.model(X, forecast_horizon=horizon)
                 predictions = outputs.forecast.cpu().numpy()
-            except:
+            except Exception as e:
+                print(f"MOMENT prediction fallback: {e}")
                 outputs = self.model(X)
                 predictions = outputs.last_hidden_state[:, -horizon:, :].cpu().numpy()
 
@@ -98,10 +99,32 @@ class MOMENTWrapper(BaseTSFMWrapper):
         if not self.is_loaded:
             self.load_model()
 
+        target_modules = ["query", "value"]
+        if hasattr(self.model, 'config') and hasattr(self.model.config, 'hidden_size'):
+            try:
+                named_modules = [n for n, _ in self.model.named_modules()]
+                if any('q_proj' in n for n in named_modules):
+                    target_modules = ["q_proj", "v_proj"]
+                elif any('attn.query' in n for n in named_modules):
+                    target_modules = ["attn.query", "attn.value"]
+            except Exception:
+                pass
+
+        target_modules = ["query", "value"]
+        if hasattr(self.model, 'config') and hasattr(self.model.config, 'hidden_size'):
+            try:
+                named_modules = [n for n, _ in self.model.named_modules()]
+                if any('q_proj' in n for n in named_modules):
+                    target_modules = ["q_proj", "v_proj"]
+                elif any('attn.query' in n for n in named_modules):
+                    target_modules = ["attn.query", "attn.value"]
+            except Exception:
+                pass
+
         lora_config = LoraConfig(
             r=lora_r,
             lora_alpha=lora_alpha,
-            target_modules=["query", "value"],
+            target_modules=target_modules,
             lora_dropout=0.1,
             bias="none",
             task_type=TaskType.FEATURE_EXTRACTION

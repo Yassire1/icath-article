@@ -53,7 +53,7 @@ class SCADAPreprocessor:
     def _kalman_impute(self, data: np.ndarray) -> np.ndarray:
         """Simple Kalman-like forward-backward imputation"""
         df = pd.DataFrame(data)
-        df = df.fillna(method='ffill').fillna(method='bfill')
+        df = df.ffill().bfill()
         df = df.interpolate(method='linear', limit_direction='both')
         df = df.fillna(df.mean())
         return df.values

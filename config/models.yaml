@@ -61,8 +61,8 @@ tsfm_models:
     tasks:
       - "forecasting"
 
-  lag_llama
-    name: "Lag-Llama
+  lag_llama:
+    name: "Lag-Llama"
     type: "foundation"
     hub_id: "time-series-foundation-models/Lag-Llama"
     paper: "arXiv:2310.08278"

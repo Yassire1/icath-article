@@ -78,27 +78,26 @@ def auc_pr(y_true: np.ndarray, y_scores: np.ndarray) -> float:
 
 
 def concordance_index(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Concordance Index (C-Index) for RUL prediction"""
+    """Concordance Index (C-Index) for RUL prediction - vectorized"""
+    y_true = y_true.flatten()
+    y_pred = y_pred.flatten()
     n = len(y_true)
-    concordant = 0
-    discordant = 0
-    tied = 0
-
-    for i in range(n):
-        for j in range(i + 1, n):
-            if y_true[i] != y_true[j]:
-                if (y_true[i] < y_true[j] and y_pred[i] < y_pred[j]) or \
-                   (y_true[i] > y_true[j] and y_pred[i] > y_pred[j]):
-                    concordant += 1
-                elif y_pred[i] == y_pred[j]:
-                    tied += 1
-                else:
-                    discordant += 1
-
-    total = concordant + discordant + tied
+    
+    if n < 2:
+        return 0.5
+    
+    i, j = np.triu_indices(n, k=1)
+    true_diff = y_true[i] - y_true[j]
+    pred_diff = y_pred[i] - y_pred[j]
+    
+    comparable = true_diff != 0
+    concordant = np.sum((true_diff * pred_diff) > 0)
+    tied = np.sum(pred_diff[comparable] == 0)
+    total = np.sum(comparable)
+    
     if total == 0:
         return 0.5
-
+    
     return (concordant + 0.5 * tied) / total
 
 
