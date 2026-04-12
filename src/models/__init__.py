@@ -3,6 +3,7 @@ Model factory and registry
 """
 
 from typing import Dict, Optional
+from scripts.pipeline_config import MODEL_IDS, PATCHTST_MAX_STEPS, PATCHTST_BATCH_SIZE, PATCHTST_WINDOWS_BATCH_SIZE
 from .base import BaseTSFMWrapper
 from .moment import MOMENTWrapper
 from .chronos import ChronosWrapper
@@ -26,6 +27,17 @@ def get_model(model_name: str, device: str = "cuda", **kwargs) -> BaseTSFMWrappe
             f"Unknown model: {model_name}. "
             f"Available: {list(MODEL_REGISTRY.keys())}"
         )
+
+    if model_name == "moment":
+        kwargs.setdefault("model_id", MODEL_IDS["moment"])
+    elif model_name == "chronos":
+        kwargs.setdefault("model_id", MODEL_IDS["chronos"])
+    elif model_name == "lag_llama":
+        kwargs.setdefault("model_id", MODEL_IDS["lag_llama"])
+    elif model_name == "patchtst":
+        kwargs.setdefault("max_steps", PATCHTST_MAX_STEPS)
+        kwargs.setdefault("batch_size", PATCHTST_BATCH_SIZE)
+        kwargs.setdefault("windows_batch_size", PATCHTST_WINDOWS_BATCH_SIZE)
 
     return MODEL_REGISTRY[model_name](device=device, **kwargs)
 

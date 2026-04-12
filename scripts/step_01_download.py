@@ -3,13 +3,17 @@ Step 1: Download datasets (C-MAPSS, Wind SCADA, MIMII).
 
 Idempotent — skips datasets that are already present.
 Run:  python scripts/step_01_download.py
+      python scripts/step_01_download.py --strict
 """
 
+import argparse
 import subprocess
 import sys
+import shutil
 import urllib.request
 import urllib.error
 import zipfile
+from pathlib import Path
 
 from pipeline_config import (
     RAW_DIR, MIMII_MACHINES, MIMII_ZENODO_RECORD_ID,
@@ -17,6 +21,20 @@ from pipeline_config import (
 )
 
 log = setup_logging()
+
+
+def _kaggle_cmd():
+    """Resolve a Kaggle CLI command that works in this environment."""
+    which = shutil.which("kaggle")
+    if which:
+        return [which]
+
+    sibling = Path(sys.executable).with_name("kaggle")
+    if sibling.exists():
+        return [sibling]
+
+    # Fallback for environments where only the module entry is available.
+    return [sys.executable, "-m", "kaggle.cli"]
 
 
 # ── C-MAPSS ──────────────────────────────────────────────────────────────
@@ -31,8 +49,8 @@ def download_cmapss():
 
     log.info("Downloading C-MAPSS from Kaggle (behrad3d/nasa-cmaps) ...")
     try:
-        proc = subprocess.run(
-            ["kaggle", "datasets", "download", "-d", "behrad3d/nasa-cmaps",
+        subprocess.run(
+            _kaggle_cmd() + ["datasets", "download", "-d", "behrad3d/nasa-cmaps",
              "-p", str(dest), "--unzip"],
             capture_output=True, text=True, check=True,
         )
@@ -51,6 +69,11 @@ def download_cmapss():
                 except OSError:
                     pass
         return sentinel.exists()
+    except subprocess.CalledProcessError as e:
+        msg = (e.stderr or e.stdout or str(e)).strip()
+        log.error(f"C-MAPSS download failed: {msg[:500]}")
+        log.info("Manual: https://data.nasa.gov/download/ff5v-kuh6/application%2Fzip")
+        return False
     except Exception as e:
         log.error(f"C-MAPSS download failed: {e}")
         log.info("Manual: https://data.nasa.gov/download/ff5v-kuh6/application%2Fzip")
@@ -73,11 +96,15 @@ def download_wind_scada():
     ]
     for slug in slugs:
         log.info(f"Trying Kaggle dataset: {slug}")
-        proc = subprocess.run(
-            ["kaggle", "datasets", "download", "-d", slug,
-             "-p", str(dest), "--unzip"],
-            capture_output=True, text=True,
-        )
+        try:
+            proc = subprocess.run(
+                _kaggle_cmd() + ["datasets", "download", "-d", slug,
+                                 "-p", str(dest), "--unzip"],
+                capture_output=True, text=True,
+            )
+        except Exception as e:
+            log.warning(f"Failed to launch Kaggle CLI: {e}")
+            break
         if proc.returncode == 0:
             import shutil
             for sub in dest.iterdir():
@@ -135,20 +162,34 @@ def download_mimii():
                 zip_path = dest / fname
                 log.info(f"Trying: {url}")
                 try:
-                    resp = urllib.request.urlopen(url, timeout=30)
-                    total = int(resp.headers.get("Content-Length", 0))
-                    got = 0
-                    with open(zip_path, "wb") as f:
-                        while True:
-                            chunk = resp.read(CHUNK)
-                            if not chunk:
-                                break
-                            f.write(chunk)
-                            got += len(chunk)
-                            if total > 0:
-                                pct = min(int(got * 100 / total), 100)
-                                print(f"\r  {pct}% ({got/1e6:.1f}/{total/1e6:.1f} MB)",
-                                      end="", flush=True)
+                    with urllib.request.urlopen(url, timeout=30) as resp:
+                        total = int(resp.headers.get("Content-Length", 0))
+                        free = shutil.disk_usage(dest).free
+                        if total > 0:
+                            needed = int(total * 1.1)
+                            if free < needed:
+                                raise OSError(
+                                    "Insufficient disk space for MIMII archive: "
+                                    f"need ~{needed/1e9:.2f} GB, free {free/1e9:.2f} GB"
+                                )
+                        elif free < 2 * (1 << 30):
+                            raise OSError(
+                                "Insufficient disk space for unknown-size MIMII archive "
+                                f"(free {free/1e9:.2f} GB)"
+                            )
+
+                        got = 0
+                        with open(zip_path, "wb") as f:
+                            while True:
+                                chunk = resp.read(CHUNK)
+                                if not chunk:
+                                    break
+                                f.write(chunk)
+                                got += len(chunk)
+                                if total > 0:
+                                    pct = min(int(got * 100 / total), 100)
+                                    print(f"\r  {pct}% ({got/1e6:.1f}/{total/1e6:.1f} MB)",
+                                          end="", flush=True)
                     print()
                     log.info(f"Extracting {fname} ...")
                     with zipfile.ZipFile(zip_path, "r") as z:
@@ -171,7 +212,7 @@ def download_mimii():
 
 
 # ── Verify ───────────────────────────────────────────────────────────────
-def verify_downloads() -> bool:
+def verify_downloads():
     checks = {
         "C-MAPSS FD001 train": RAW_DIR / "cmapss" / "train_FD001.txt",
         "C-MAPSS FD001 test":  RAW_DIR / "cmapss" / "test_FD001.txt",
@@ -179,33 +220,48 @@ def verify_downloads() -> bool:
         "MIMII WAV":           next((RAW_DIR / "mimii").rglob("*.wav"), None),
     }
     all_ok = True
+    missing = []
     for label, path in checks.items():
         exists = path is not None and path.exists()
         status = "OK" if exists else "MISSING"
         log.info(f"  [{status}] {label}")
         if not exists:
             all_ok = False
-    return all_ok
+            missing.append(label)
+    return all_ok, missing
 
 
 # ── Main entry ───────────────────────────────────────────────────────────
-def main():
+def main(strict: bool = False):
     ensure_dirs()
     log.info("=" * 60)
     log.info("STEP 1: Download Datasets")
     log.info("=" * 60)
 
-    download_cmapss()
-    download_wind_scada()
-    download_mimii()
+    cmapss_ok = download_cmapss()
+    wind_ok = download_wind_scada()
+    mimii_ok = download_mimii()
 
-    ok = verify_downloads()
+    ok, missing = verify_downloads()
     if ok:
         mark_step_done("step_01_download", {"datasets": ["cmapss", "wind_scada", "mimii"]})
         log.info("Step 1 complete — all datasets available.")
     else:
         log.warning("Step 1 partial — some datasets missing (see above).")
+        log.warning(f"Download return flags: cmapss={cmapss_ok}, wind_scada={wind_ok}, mimii={mimii_ok}")
+        if strict:
+            raise RuntimeError(
+                "Strict mode enabled and required datasets are missing: "
+                + ", ".join(missing)
+            )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Step 1: Download datasets")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit with error if any required dataset is missing after download attempts.",
+    )
+    args = parser.parse_args()
+    main(strict=args.strict)

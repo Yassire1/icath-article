@@ -127,31 +127,27 @@ def download_wind_scada(data_dir: Path):
 
 
 def download_mimii(data_dir: Path):
-    """Download MIMII dataset from Zenodo"""
+    """Guide for MIMII dataset download from Zenodo (manual)."""
     dest = data_dir / "mimii"
     dest.mkdir(parents=True, exist_ok=True)
 
-    urls = {
-        "fan": "https://zenodo.org/record/3384388/files/fan.zip",
-        "pump": "https://zenodo.org/record/3384388/files/pump.zip",
-        "slider": "https://zenodo.org/record/3384388/files/slider.zip",
-        "valve": "https://zenodo.org/record/3384388/files/valve.zip"
-    }
-
     print("MIMII Dataset")
     print("=" * 50)
-    print("Downloading from Zenodo...")
+    print("Manual download recommended (large dataset).")
+    print("1. Go to: https://zenodo.org/record/3384388")
+    print("2. Download required machine archives (fan, pump, slider, valve)")
+    print("3. Extract under:")
+    print(f"   {dest}")
+    print("4. Ensure machine folders exist: fan, pump, slider, valve")
+    print("=" * 50)
 
-    for name, url in urls.items():
-        zip_path = dest / f"{name}.zip"
-        if not zip_path.exists():
-            print(f"Downloading {name}...")
-            if download_file(url, zip_path):
-                extract_archive(zip_path, dest / name)
-        else:
-            print(f"{name} already downloaded")
-
-    return True
+    expected_dirs = [
+        dest / "fan",
+        dest / "pump",
+        dest / "slider",
+        dest / "valve",
+    ]
+    return all(path.exists() for path in expected_dirs)
 
 
 def download_pronostia(data_dir: Path):

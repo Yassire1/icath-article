@@ -20,7 +20,7 @@ from pipeline_config import (
     PROC_DIR, RESULTS_DIR,
     MODELS_FEW_SHOT, CMAPSS_HORIZON, HORIZON,
     LORA_R, LORA_ALPHA, LORA_EPOCHS, LORA_LR, TRAIN_RATIO,
-    DEVICE, SEED,
+    DEVICE, SEED, EVAL_BATCH_SIZE, MAX_EVAL_SAMPLES, MAX_FEW_SHOT_SAMPLES,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.models import get_model
@@ -41,7 +41,12 @@ def load_dataset(name, subset=None):
 
 
 def run_few_shot(model_name, X_train, y_train, X_test, y_test, horizon):
+    if len(X_test) > MAX_EVAL_SAMPLES:
+        X_test = X_test[:MAX_EVAL_SAMPLES]
+        y_test = y_test[:MAX_EVAL_SAMPLES]
+
     n_few = max(int(len(X_train) * TRAIN_RATIO), 32)
+    n_few = min(n_few, MAX_FEW_SHOT_SAMPLES)
     X_few = torch.FloatTensor(X_train[:n_few])
     y_few = torch.FloatTensor(y_train[:n_few])
 
@@ -54,8 +59,12 @@ def run_few_shot(model_name, X_train, y_train, X_test, y_test, horizon):
         lora_r=LORA_R, lora_alpha=LORA_ALPHA,
     )
 
-    results = model.predict(torch.FloatTensor(X_test), horizon=horizon)
-    preds = results["predictions"]
+    pred_chunks = []
+    for start in range(0, len(X_test), EVAL_BATCH_SIZE):
+        batch = torch.FloatTensor(X_test[start:start + EVAL_BATCH_SIZE])
+        results = model.predict(batch, horizon=horizon)
+        pred_chunks.append(results["predictions"])
+    preds = np.concatenate(pred_chunks, axis=0)
 
     y = y_test
     if y.ndim == 1:
@@ -96,12 +105,16 @@ def main():
 
     total = 0
     skipped = 0
+    succeeded = 0
+    failed = 0
+    missing_datasets = []
 
     for ds_name, subset, h in dataset_cfgs:
         try:
             X_tr, y_tr, X_te, y_te = load_dataset(ds_name, subset)
         except FileNotFoundError as e:
             log.warning(f"  {e} — skipping dataset.")
+            missing_datasets.append(f"{ds_name}/{subset}" if subset else ds_name)
             continue
 
         ds_label = f"{ds_name}/{subset}" if subset else ds_name
@@ -127,12 +140,28 @@ def main():
                 with open(json_path, "w") as f:
                     json.dump(record, f, indent=2)
                 log.info(f"    Result: {metrics}")
+                succeeded += 1
             except Exception as e:
                 log.error(f"    ERROR: {e}")
                 traceback.print_exc()
+                failed += 1
 
-    mark_step_done("step_04_few_shot", {"total": total, "cached": skipped})
-    log.info(f"Step 4 complete — {total} runs ({skipped} cached).")
+    mark_step_done("step_04_few_shot", {
+        "total": total,
+        "cached": skipped,
+        "completed": succeeded,
+        "failed": failed,
+    })
+    if total == 0:
+        log.warning("Step 4 completed with 0 runs; no preprocessed datasets were available.")
+    else:
+        log.info(f"Step 4 complete — {total} runs ({skipped} cached).")
+
+    if missing_datasets:
+        raise RuntimeError(
+            "Few-shot step is incomplete because required datasets are missing: "
+            + ", ".join(missing_datasets)
+        )
 
 
 if __name__ == "__main__":

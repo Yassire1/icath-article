@@ -117,7 +117,15 @@ def main():
     if failed:
         log.error(f"  FAILED at step(s): {failed}")
     else:
-        log.info("  All steps completed successfully.")
+        manifest = load_manifest()
+        completed_steps = manifest.get("steps", {})
+        expected = {module_name for _, module_name, _ in steps_to_run}
+        missing = sorted(name for name in expected if completed_steps.get(name, {}).get("status") != "completed")
+        if missing:
+            log.error(f"  Pipeline import/execution returned, but these steps did not mark completion: {missing}")
+            failed.extend(missing)
+        else:
+            log.info("  All steps completed successfully.")
     log.info("")
     log.info("  Output locations:")
     log.info("    data/processed/          ← preprocessed .pt tensors")

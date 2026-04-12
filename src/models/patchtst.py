@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import pandas as pd
 from typing import Dict, Optional, Union
+from scripts.pipeline_config import PATCHTST_MAX_TRAIN_WINDOWS
 from .base import BaseTSFMWrapper
 
 
@@ -35,17 +36,21 @@ class PatchTSTWrapper(BaseTSFMWrapper):
 
             self.model = PatchTST(
                 h=self.horizon,
-                input_size=self.input_size,
+                input_size=min(self.input_size, 32),
                 patch_len=self.config.get('patch_len', 16),
                 stride=self.config.get('stride', 8),
                 hidden_size=self.config.get('hidden_size', 128),
                 n_heads=self.config.get('n_heads', 16),
-                e_layers=self.config.get('e_layers', 3),
-                d_ff=self.config.get('d_ff', 256),
+                encoder_layers=self.config.get('encoder_layers', 3),
+                linear_hidden_size=self.config.get('linear_hidden_size', 256),
                 dropout=self.config.get('dropout', 0.2),
                 learning_rate=self.config.get('learning_rate', 1e-4),
-                max_steps=self.config.get('max_steps', 1000),
-                batch_size=self.config.get('batch_size', 32),
+                max_steps=self.config.get('max_steps', 200),
+                batch_size=self.config.get('batch_size', 64),
+                windows_batch_size=self.config.get('windows_batch_size', 256),
+                start_padding_enabled=True,
+                enable_checkpointing=False,
+                logger=False,
                 scaler_type='standard'
             )
             self.is_loaded = True
@@ -62,7 +67,7 @@ class PatchTSTWrapper(BaseTSFMWrapper):
         """
         n_samples, seq_len, n_channels = X.shape
         X_uni = X.mean(axis=-1)  # (n_samples, seq_len)
-        base_ts = pd.date_range("2020-01-01", periods=seq_len, freq="H")
+        base_ts = pd.date_range("2020-01-01", periods=seq_len, freq="h")
         dfs = [
             pd.DataFrame({"unique_id": str(i), "ds": base_ts, "y": X_uni[i]})
             for i in range(n_samples)
@@ -83,13 +88,17 @@ class PatchTSTWrapper(BaseTSFMWrapper):
         if isinstance(y_train, torch.Tensor):
             y_train = y_train.cpu().numpy()
 
+        if len(X_train) > PATCHTST_MAX_TRAIN_WINDOWS:
+            X_train = X_train[:PATCHTST_MAX_TRAIN_WINDOWS]
+            y_train = y_train[:PATCHTST_MAX_TRAIN_WINDOWS]
+
         from neuralforecast import NeuralForecast
 
         df = self._prepare_neuralforecast_data(X_train)
 
         self.nf = NeuralForecast(
             models=[self.model],
-            freq='H'
+            freq='h'
         )
         self.nf.fit(df=df)
         print("PatchTST training complete")
@@ -114,6 +123,7 @@ class PatchTSTWrapper(BaseTSFMWrapper):
         df = self._prepare_neuralforecast_data(X)
 
         forecast_df = self.nf.predict(df=df)
+        forecast_df = forecast_df.reset_index()
 
         # neuralforecast predict() returns a DataFrame with columns:
         # unique_id, ds, PatchTST (the model name)

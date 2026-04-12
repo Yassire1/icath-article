@@ -197,7 +197,7 @@ def create_results_table(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run zero-shot experiments")
-    parser.add_argument("--models", type=str, default="moment,chronos,patchtst", help="Comma-separated model names")
+    parser.add_argument("--models", type=str, default="moment,chronos,lag_llama", help="Comma-separated model names")
     parser.add_argument("--datasets", type=str, default="cmapss", help="Comma-separated dataset names")
     parser.add_argument("--output", type=str, default="results/zero_shot", help="Output directory")
     parser.add_argument("--task", type=str, default="forecasting", help="Task type")

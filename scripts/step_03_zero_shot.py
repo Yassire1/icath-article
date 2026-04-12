@@ -19,7 +19,7 @@ import torch
 from pipeline_config import (
     PROC_DIR, RESULTS_DIR,
     MODELS_ZERO_SHOT, CMAPSS_HORIZON, HORIZON,
-    DEVICE, SEED,
+    DEVICE, SEED, EVAL_BATCH_SIZE, MAX_EVAL_SAMPLES,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.models import get_model
@@ -46,6 +46,10 @@ def load_dataset(name: str, subset: str = None):
 
 def run_zero_shot(model_name, dataset_name, X_train, y_train, X_test, y_test, horizon):
     """Run a single zero-shot experiment."""
+    if len(X_test) > MAX_EVAL_SAMPLES:
+        X_test = X_test[:MAX_EVAL_SAMPLES]
+        y_test = y_test[:MAX_EVAL_SAMPLES]
+
     model = get_model(model_name, device=DEVICE)
 
     if model_name == "patchtst":
@@ -54,8 +58,12 @@ def run_zero_shot(model_name, dataset_name, X_train, y_train, X_test, y_test, ho
     else:
         model.load_model()
 
-    results = model.zero_shot(torch.FloatTensor(X_test), horizon=horizon)
-    preds = results["predictions"]
+    pred_chunks = []
+    for start in range(0, len(X_test), EVAL_BATCH_SIZE):
+        batch = torch.FloatTensor(X_test[start:start + EVAL_BATCH_SIZE])
+        results = model.zero_shot(batch, horizon=horizon)
+        pred_chunks.append(results["predictions"])
+    preds = np.concatenate(pred_chunks, axis=0)
 
     y = y_test
     if y.ndim == 1:
@@ -93,6 +101,7 @@ def main():
         ("mimii",      None,    HORIZON),
     ]
 
+    missing_datasets = []
     zero_shot_results = {}
     total = 0
     skipped = 0
@@ -102,6 +111,7 @@ def main():
             X_tr, y_tr, X_te, y_te = load_dataset(ds_name, subset)
         except FileNotFoundError as e:
             log.warning(f"  {e} — skipping dataset.")
+            missing_datasets.append(f"{ds_name}/{subset}" if subset else ds_name)
             continue
 
         ds_label = f"{ds_name}/{subset}" if subset else ds_name
@@ -140,9 +150,19 @@ def main():
     mark_step_done("step_03_zero_shot", {
         "total_runs": total,
         "skipped_cached": skipped,
-        "completed": total - skipped,
+        "completed": sum(1 for v in zero_shot_results.values() if "error" not in v),
+        "failed": sum(1 for v in zero_shot_results.values() if "error" in v),
     })
-    log.info(f"Step 3 complete — {total} runs ({skipped} cached).")
+    if total == 0:
+        log.warning("Step 3 completed with 0 runs; no preprocessed datasets were available.")
+    else:
+        log.info(f"Step 3 complete — {total} runs ({skipped} cached).")
+
+    if missing_datasets:
+        raise RuntimeError(
+            "Zero-shot step is incomplete because required datasets are missing: "
+            + ", ".join(missing_datasets)
+        )
 
 
 if __name__ == "__main__":

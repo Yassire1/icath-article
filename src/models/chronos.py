@@ -15,7 +15,7 @@ class ChronosWrapper(BaseTSFMWrapper):
 
     def __init__(
         self,
-        model_id: str = "amazon/chronos-t5-large",
+        model_id: str = "amazon/chronos-t5-mini",
         device: str = "cuda",
         **kwargs
     ):
@@ -42,7 +42,7 @@ class ChronosWrapper(BaseTSFMWrapper):
         self,
         X: Union[np.ndarray, torch.Tensor],
         horizon: int = 96,
-        num_samples: int = 20,
+        num_samples: int = 5,
         **kwargs
     ) -> Dict[str, np.ndarray]:
         """Generate forecasts - Chronos is univariate"""

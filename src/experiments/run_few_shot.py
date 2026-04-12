@@ -157,7 +157,7 @@ def run_all_few_shot(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run few-shot experiments")
-    parser.add_argument("--models", type=str, default="moment,sundial")
+    parser.add_argument("--models", type=str, default="moment,lag_llama,patchtst")
     parser.add_argument("--datasets", type=str, default="cmapss")
     parser.add_argument("--output", type=str, default="results/few_shot")
     parser.add_argument("--task", type=str, default="forecasting")

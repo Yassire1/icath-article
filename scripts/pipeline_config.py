@@ -23,6 +23,14 @@ FIGURES_DIR   = RESULTS_DIR  / "figures"
 MANIFEST_PATH = RESULTS_DIR  / "manifest.json"
 LOG_PATH      = RESULTS_DIR  / "pipeline.log"
 
+DEFAULT_CACHE_ROOT = Path("/mnt/datasets") / "icath-cache"
+CACHE_ROOT = DEFAULT_CACHE_ROOT if DEFAULT_CACHE_ROOT.exists() else PROJECT_ROOT / ".cache"
+HF_HOME = CACHE_ROOT / "huggingface"
+HF_HUB_CACHE = HF_HOME / "hub"
+TRANSFORMERS_CACHE = HF_HOME / "transformers"
+TORCH_HOME = CACHE_ROOT / "torch"
+XDG_CACHE_HOME = CACHE_ROOT / "xdg"
+
 # ── Experiments ───────────────────────────────────────────────────────────
 RUN_ZERO_SHOT       = True
 RUN_FEW_SHOT        = True
@@ -31,6 +39,20 @@ RUN_CROSS_CONDITION = True
 # Models
 MODELS_ZERO_SHOT = ["moment", "chronos", "lag_llama", "patchtst"]
 MODELS_FEW_SHOT  = ["moment", "lag_llama"]   # only LoRA-capable models
+MODEL_IDS = {
+    "moment": "AutonLab/MOMENT-1-small",
+    "chronos": "amazon/chronos-t5-tiny",
+    "lag_llama": "time-series-foundation-models/Lag-Llama",
+}
+
+# Runtime tuning for CPU-only end-to-end execution
+EVAL_BATCH_SIZE = 128
+MAX_EVAL_SAMPLES = 32
+MAX_FEW_SHOT_SAMPLES = 32
+PATCHTST_MAX_TRAIN_WINDOWS = 64
+PATCHTST_MAX_STEPS = 20
+PATCHTST_BATCH_SIZE = 32
+PATCHTST_WINDOWS_BATCH_SIZE = 128
 
 # Datasets
 DATASETS = ["cmapss", "wind_scada", "mimii"]
@@ -47,7 +69,7 @@ HORIZON  = 96
 # Few-shot LoRA
 LORA_R      = 16
 LORA_ALPHA  = 32
-LORA_EPOCHS = 10
+LORA_EPOCHS = 2
 LORA_LR     = 1e-4
 TRAIN_RATIO = 0.01  # 1 %
 
@@ -66,8 +88,9 @@ DEVICE = "cpu"
 SEED   = 42
 
 # Profiling
-WARMUP_RUNS = 2
-TIMING_RUNS = 5
+PROFILE_BATCH_SIZE = 8
+WARMUP_RUNS = 1
+TIMING_RUNS = 1
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
@@ -111,6 +134,12 @@ def ensure_dirs():
         RESULTS_DIR / "cross_condition",
         TABLES_DIR,
         FIGURES_DIR,
+        CACHE_ROOT,
+        HF_HOME,
+        HF_HUB_CACHE,
+        TRANSFORMERS_CACHE,
+        TORCH_HOME,
+        XDG_CACHE_HOME,
     ]:
         d.mkdir(parents=True, exist_ok=True)
 
@@ -205,4 +234,10 @@ def setup_kaggle_credentials() -> None:
 
 # Auto-run at import time so every script that imports pipeline_config gets
 # the credentials injected before it does anything with Kaggle.
+os.environ.setdefault("HF_HOME", str(HF_HOME))
+os.environ.setdefault("HUGGINGFACE_HUB_CACHE", str(HF_HUB_CACHE))
+os.environ.setdefault("TRANSFORMERS_CACHE", str(TRANSFORMERS_CACHE))
+os.environ.setdefault("TORCH_HOME", str(TORCH_HOME))
+os.environ.setdefault("XDG_CACHE_HOME", str(XDG_CACHE_HOME))
+
 setup_kaggle_credentials()

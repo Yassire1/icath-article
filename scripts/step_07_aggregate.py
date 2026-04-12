@@ -120,6 +120,9 @@ def main():
     df_all.to_csv(TABLES_DIR / "all_results.csv", index=False)
     files_written.append("all_results.csv")
 
+    if df_all.empty:
+        log.warning("No successful experiment JSON files were found; tables are mostly empty placeholders.")
+
     log.info(f"  Total records: {len(df_all)}")
     log.info(f"  Files written: {', '.join(files_written)}")
 

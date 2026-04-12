@@ -20,7 +20,7 @@ import torch
 from pipeline_config import (
     PROC_DIR, TABLES_DIR,
     MODELS_ZERO_SHOT, CMAPSS_HORIZON, DEVICE,
-    WARMUP_RUNS, TIMING_RUNS,
+    WARMUP_RUNS, TIMING_RUNS, PROFILE_BATCH_SIZE,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.models import get_model
@@ -34,9 +34,9 @@ def load_profile_batch():
     d = torch.load(path, map_location="cpu", weights_only=False)
     X = d["test_X"]
     if isinstance(X, torch.Tensor):
-        X = X[:32]
+        X = X[:PROFILE_BATCH_SIZE]
     else:
-        X = torch.FloatTensor(X[:32])
+        X = torch.FloatTensor(X[:PROFILE_BATCH_SIZE])
     return X
 
 
@@ -133,7 +133,11 @@ def main():
         df.to_csv(TABLES_DIR / "efficiency_summary.csv", index=False)
         log.info(f"  Saved efficiency_summary.csv ({len(rows)} models)")
 
-    mark_step_done("step_06_profile", {"models_profiled": len(rows)})
+    failed = sum(1 for v in profile_results.values() if "error" in v)
+    mark_step_done("step_06_profile", {
+        "models_profiled": len(rows),
+        "models_failed": failed,
+    })
     log.info("Step 6 complete.")
 
 

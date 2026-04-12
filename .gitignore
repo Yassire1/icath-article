@@ -15,10 +15,9 @@ build/
 *.conda
 
 # Data (large files)
-data/raw/*
-!data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
+data/processed_root_backup_20260411/
+data/raw_root_backup_20260411/
+data/
 
 # Results (generated)
 results/
@@ -51,3 +50,4 @@ Thumbs.db
 wandb/
 
 paper_proposal*
+.env/

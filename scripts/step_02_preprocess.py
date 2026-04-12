@@ -24,7 +24,7 @@ from pipeline_config import (
     CMAPSS_SUBSETS, CMAPSS_LOOKBACK, CMAPSS_HORIZON,
     LOOKBACK, HORIZON, SEED,
     MIMII_MACHINES, MIMII_MAX_FILES, MIMII_N_MFCC,
-    MIMII_SR, MIMII_N_FFT, MIMII_HOP,
+    MIMII_SR, MIMII_N_FFT, MIMII_HOP, DATASETS,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.data.preprocessing import SCADAPreprocessor
@@ -129,7 +129,9 @@ def preprocess_mimii() -> dict:
     all_wavs = sorted(mimii_raw.rglob("*.wav"))[:MIMII_MAX_FILES]
     if not all_wavs:
         log.warning("  MIMII: no WAV files found — skipping.")
-        return {}
+        raise RuntimeError(
+            "MIMII raw data is missing. Step 1 must complete fully before preprocessing."
+        )
 
     log.info(f"  MIMII: extracting MFCC from {len(all_wavs)} WAV files (chunked) ...")
 
@@ -138,12 +140,14 @@ def preprocess_mimii() -> dict:
     #    hold all raw audio + all MFCCs in RAM simultaneously.
     CHUNK_SIZE = 50  # WAV files per chunk
 
-    # First pass: compute total frames to pre-allocate
+    # First pass: compute total frames to pre-allocate.
+    # librosa uses centered STFT by default, so frame count is:
+    #   n_frames = 1 + floor(len(y) / hop_length)
     total_frames = 0
     for wav in all_wavs:
         y, sr = librosa.load(wav, sr=MIMII_SR, mono=True)
-        n_frames = 1 + (len(y) - MIMII_N_FFT) // MIMII_HOP
-        total_frames += max(n_frames, 0)
+        n_frames = 1 + (len(y) // MIMII_HOP)
+        total_frames += n_frames
         del y
         gc.collect()
 
@@ -167,12 +171,19 @@ def preprocess_mimii() -> dict:
                 n_fft=MIMII_N_FFT, hop_length=MIMII_HOP,
             ).T  # (frames, n_mfcc)
             n = mfcc.shape[0]
+            if write_pos + n > total_frames:
+                raise RuntimeError(
+                    "MFCC pre-allocation was too small; "
+                    "verify frame counting logic before continuing."
+                )
             timeline[write_pos : write_pos + n] = mfcc
             write_pos += n
             del y, mfcc
         gc.collect()
         done = min(chunk_start + CHUNK_SIZE, len(all_wavs))
         log.info(f"    Processed {done}/{len(all_wavs)} WAV files")
+
+    timeline.flush()
 
     log.info(f"    MFCC timeline shape: ({write_pos}, {MIMII_N_MFCC})")
 
@@ -222,9 +233,14 @@ def main():
     log.info("STEP 2: Preprocess Datasets")
     log.info("=" * 60)
 
-    cmapss_data = preprocess_cmapss()
-    scada_data  = preprocess_wind_scada()
-    mimii_data  = preprocess_mimii()
+    cmapss_data = preprocess_cmapss() if "cmapss" in DATASETS else {}
+    scada_data  = preprocess_wind_scada() if "wind_scada" in DATASETS else {}
+    mimii_data  = preprocess_mimii() if "mimii" in DATASETS else {}
+
+    if not (cmapss_data or scada_data or mimii_data):
+        raise RuntimeError(
+            "No datasets were preprocessed. Ensure step 1 downloaded raw data into data/raw/."
+        )
 
     summary = {
         "cmapss_subsets": list(cmapss_data.keys()) if cmapss_data else [],

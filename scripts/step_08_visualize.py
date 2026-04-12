@@ -173,6 +173,8 @@ def main():
     fig_cross_condition_heatmap(df_cc)
 
     figures = list(FIGURES_DIR.glob("*.*"))
+    if not figures:
+        log.warning("No figures were generated; missing aggregated experiment data.")
     mark_step_done("step_08_visualize", {"figures": [f.name for f in figures]})
     log.info(f"Step 8 complete — {len(figures)} figure files.")
 

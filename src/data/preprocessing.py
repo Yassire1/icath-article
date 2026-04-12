@@ -156,8 +156,8 @@ class SCADAPreprocessor:
         cols = ['unit', 'cycle'] + [f'op_{i}' for i in range(3)] + [f'sensor_{i}' for i in range(21)]
 
         train_df = pd.read_csv(data_path / f"train_{subset}.txt", sep=r'\s+', header=None, names=cols)
-        test_df = pd.read_csv(data_path / f"test_{subset}.txt", sep=r'\s+', header=None, names=cols)
-        rul_df = pd.read_csv(data_path / f"RUL_{subset}.txt", sep=r'\s+', header=None, names=['rul'])
+        pd.read_csv(data_path / f"test_{subset}.txt", sep=r'\s+', header=None, names=cols)
+        pd.read_csv(data_path / f"RUL_{subset}.txt", sep=r'\s+', header=None, names=['rul'])
 
         # Exclude constant sensors
         sensor_cols = [f'sensor_{i}' for i in [2, 3, 4, 7, 8, 9, 11, 12, 13, 14, 15, 17, 20]]
@@ -176,27 +176,55 @@ class SCADAPreprocessor:
                 splits['train'], splits['val'], splits['test']
             )
 
-            X_tr, y_tr = self._create_sequences(train_n, splits['train_targets'])
-            X_va, y_va = self._create_sequences(val_n, splits['val_targets'])
-            X_te, y_te = self._create_sequences(test_n, splits['test_targets'])
+            # Build windows on the full normalized unit trajectory while assigning
+            # each window to a split based on where its target timestamp falls.
+            # This preserves chronological split boundaries while allowing val/test
+            # windows even when those segments are shorter than the lookback.
+            unit_norm = np.concatenate([train_n, val_n, test_n], axis=0)
+            train_end = len(train_n)
+            val_end = train_end + len(val_n)
 
-            if len(X_tr) > 0:
+            def _windows_for_target_range(start_idx: int, end_idx: int):
+                X_part, y_part = [], []
+                label_start = max(start_idx, self.lookback)
+                for t in range(label_start, end_idx):
+                    X_part.append(unit_norm[t - self.lookback:t])
+                    y_part.append(rul[t])
+                if not X_part:
+                    return None, None
+                return np.array(X_part, dtype=np.float32), np.array(y_part, dtype=np.float32)
+
+            X_tr, y_tr = _windows_for_target_range(0, train_end)
+            X_va, y_va = _windows_for_target_range(train_end, val_end)
+            X_te, y_te = _windows_for_target_range(val_end, len(unit_norm))
+
+            if X_tr is not None:
                 all_X_train.append(X_tr)
                 all_y_train.append(y_tr)
-            if len(X_va) > 0:
+            if X_va is not None:
                 all_X_val.append(X_va)
                 all_y_val.append(y_va)
-            if len(X_te) > 0:
+            if X_te is not None:
                 all_X_test.append(X_te)
                 all_y_test.append(y_te)
 
+        def _cat_or_empty(arrays: List[np.ndarray], tail_shape: Tuple[int, ...]) -> torch.Tensor:
+            if arrays:
+                return torch.FloatTensor(np.concatenate(arrays, axis=0))
+            return torch.empty((0, *tail_shape), dtype=torch.float32)
+
+        def _cat_targets_or_empty(arrays: List[np.ndarray]) -> torch.Tensor:
+            if arrays:
+                return torch.FloatTensor(np.concatenate(arrays, axis=0))
+            return torch.empty((0,), dtype=torch.float32)
+
         result = {
-            'train_X': torch.FloatTensor(np.concatenate(all_X_train, axis=0)),
-            'train_y': torch.FloatTensor(np.concatenate(all_y_train, axis=0)),
-            'val_X': torch.FloatTensor(np.concatenate(all_X_val, axis=0)),
-            'val_y': torch.FloatTensor(np.concatenate(all_y_val, axis=0)),
-            'test_X': torch.FloatTensor(np.concatenate(all_X_test, axis=0)),
-            'test_y': torch.FloatTensor(np.concatenate(all_y_test, axis=0)),
+            'train_X': _cat_or_empty(all_X_train, (self.lookback, len(sensor_cols))),
+            'train_y': _cat_targets_or_empty(all_y_train),
+            'val_X': _cat_or_empty(all_X_val, (self.lookback, len(sensor_cols))),
+            'val_y': _cat_targets_or_empty(all_y_val),
+            'test_X': _cat_or_empty(all_X_test, (self.lookback, len(sensor_cols))),
+            'test_y': _cat_targets_or_empty(all_y_test),
             'task': 'rul',
             'dataset': 'cmapss',
             'subset': subset,

@@ -19,7 +19,7 @@ import torch
 from pipeline_config import (
     PROC_DIR, RESULTS_DIR,
     MODELS_ZERO_SHOT, CMAPSS_SUBSETS, CMAPSS_HORIZON,
-    DEVICE, SEED,
+    DEVICE, SEED, EVAL_BATCH_SIZE, MAX_EVAL_SAMPLES,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.models import get_model
@@ -38,14 +38,22 @@ def load_cmapss(subset):
 
 
 def run_single(model_name, X_train, y_train, X_test, y_test, horizon):
+    if len(X_test) > MAX_EVAL_SAMPLES:
+        X_test = X_test[:MAX_EVAL_SAMPLES]
+        y_test = y_test[:MAX_EVAL_SAMPLES]
+
     model = get_model(model_name, device=DEVICE)
     if model_name == "patchtst":
         model.fit(torch.FloatTensor(X_train), torch.FloatTensor(y_train))
     else:
         model.load_model()
 
-    results = model.predict(torch.FloatTensor(X_test), horizon=horizon)
-    preds = results["predictions"]
+    pred_chunks = []
+    for start in range(0, len(X_test), EVAL_BATCH_SIZE):
+        batch = torch.FloatTensor(X_test[start:start + EVAL_BATCH_SIZE])
+        results = model.predict(batch, horizon=horizon)
+        pred_chunks.append(results["predictions"])
+    preds = np.concatenate(pred_chunks, axis=0)
 
     y = y_test
     if y.ndim == 1:
@@ -87,6 +95,8 @@ def main():
 
     total = 0
     skipped = 0
+    succeeded = 0
+    failed = 0
 
     for target in all_targets:
         try:
@@ -121,12 +131,22 @@ def main():
                 with open(json_path, "w") as f:
                     json.dump(record, f, indent=2)
                 log.info(f"    Result: {metrics}")
+                succeeded += 1
             except Exception as e:
                 log.error(f"    ERROR: {e}")
                 traceback.print_exc()
+                failed += 1
 
-    mark_step_done("step_05_cross_condition", {"total": total, "cached": skipped})
-    log.info(f"Step 5 complete — {total} runs ({skipped} cached).")
+    mark_step_done("step_05_cross_condition", {
+        "total": total,
+        "cached": skipped,
+        "completed": succeeded,
+        "failed": failed,
+    })
+    if total == 0:
+        log.warning("Step 5 completed with 0 runs; required preprocessed C-MAPSS subsets were unavailable.")
+    else:
+        log.info(f"Step 5 complete — {total} runs ({skipped} cached).")
 
 
 if __name__ == "__main__":
