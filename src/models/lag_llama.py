@@ -53,7 +53,7 @@ class LagLlamaWrapper(BaseTSFMWrapper):
             filename="lag-llama.ckpt",
         )
 
-        checkpoint = torch.load(ckpt_path, map_location="cpu")
+        checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         ckpt_hparams = checkpoint.get("hyper_parameters", {})
         ckpt_model_kwargs = ckpt_hparams.get("model_kwargs", {})
 

@@ -8,6 +8,7 @@ Idempotent — skips model-dataset pairs whose JSON result already exists.
 Run:  python scripts/step_03_zero_shot.py
 """
 
+import gc
 import json
 import traceback
 from datetime import datetime
@@ -28,6 +29,56 @@ from src.data.preprocessing import SCADAPreprocessor
 log = setup_logging()
 
 RES_ZS = RESULTS_DIR / "zero_shot"
+MODEL_EVAL_BATCH_SIZES = {
+    "moment": 4,
+    "chronos": 8,
+    "lag_llama": 16,
+    "patchtst": 16,
+}
+
+
+def clear_runtime_memory():
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        try:
+            torch.cuda.ipc_collect()
+        except RuntimeError:
+            pass
+
+
+def is_cuda_oom(exc: Exception) -> bool:
+    if isinstance(exc, torch.cuda.OutOfMemoryError):
+        return True
+    return "out of memory" in str(exc).lower()
+
+
+def batched_zero_shot_predict(model, model_name, X_test, horizon):
+    if len(X_test) == 0:
+        return np.empty((0, horizon, 0), dtype=np.float32)
+
+    batch_size = min(MODEL_EVAL_BATCH_SIZES.get(model_name, EVAL_BATCH_SIZE), len(X_test))
+    pred_chunks = []
+    start = 0
+
+    while start < len(X_test):
+        stop = min(start + batch_size, len(X_test))
+        batch = torch.FloatTensor(X_test[start:stop])
+        try:
+            results = model.zero_shot(batch, horizon=horizon)
+            pred_chunks.append(results["predictions"])
+            start = stop
+        except Exception as exc:
+            if not is_cuda_oom(exc) or batch_size == 1:
+                raise
+            clear_runtime_memory()
+            batch_size = max(1, batch_size // 2)
+            log.warning(f"    CUDA OOM at batch {stop - start}; retrying with batch_size={batch_size}")
+        finally:
+            del batch
+            clear_runtime_memory()
+
+    return np.concatenate(pred_chunks, axis=0)
 
 
 def load_dataset(name: str, subset: str = None):
@@ -50,40 +101,39 @@ def run_zero_shot(model_name, dataset_name, X_train, y_train, X_test, y_test, ho
         X_test = X_test[:MAX_EVAL_SAMPLES]
         y_test = y_test[:MAX_EVAL_SAMPLES]
 
-    model = get_model(model_name, device=DEVICE)
+    model = None
+    try:
+        clear_runtime_memory()
+        model = get_model(model_name, device=DEVICE)
 
-    if model_name == "patchtst":
-        log.info(f"  PatchTST: fitting on training split ...")
-        model.fit(torch.FloatTensor(X_train), torch.FloatTensor(y_train))
-    else:
-        model.load_model()
+        if model_name == "patchtst":
+            log.info(f"  PatchTST: fitting on training split ...")
+            model.fit(torch.FloatTensor(X_train), torch.FloatTensor(y_train))
+        else:
+            model.load_model()
 
-    pred_chunks = []
-    for start in range(0, len(X_test), EVAL_BATCH_SIZE):
-        batch = torch.FloatTensor(X_test[start:start + EVAL_BATCH_SIZE])
-        results = model.zero_shot(batch, horizon=horizon)
-        pred_chunks.append(results["predictions"])
-    preds = np.concatenate(pred_chunks, axis=0)
+        preds = batched_zero_shot_predict(model, model_name, X_test, horizon)
 
-    y = y_test
-    if y.ndim == 1:
-        preds_flat = preds.reshape(preds.shape[0], -1).mean(axis=1)
-        y_flat = y
-    else:
-        min_h = min(preds.shape[1], y.shape[1] if y.ndim > 1 else horizon)
-        preds_flat = preds[:, :min_h].flatten()
-        y_flat = y[:, :min_h].flatten() if y.ndim > 1 else y.flatten()
+        y = y_test
+        if y.ndim == 1:
+            preds_flat = preds.reshape(preds.shape[0], -1).mean(axis=1)
+            y_flat = y
+        else:
+            min_h = min(preds.shape[1], y.shape[1] if y.ndim > 1 else horizon)
+            preds_flat = preds[:, :min_h].flatten()
+            y_flat = y[:, :min_h].flatten() if y.ndim > 1 else y.flatten()
 
-    metrics = {
-        "mae":  float(np.mean(np.abs(y_flat - preds_flat))),
-        "rmse": float(np.sqrt(np.mean((y_flat - preds_flat) ** 2))),
-        "mape": float(np.mean(np.abs((y_flat - preds_flat) / (np.abs(y_flat) + 1e-8))) * 100),
-    }
+        metrics = {
+            "mae":  float(np.mean(np.abs(y_flat - preds_flat))),
+            "rmse": float(np.sqrt(np.mean((y_flat - preds_flat) ** 2))),
+            "mape": float(np.mean(np.abs((y_flat - preds_flat) / (np.abs(y_flat) + 1e-8))) * 100),
+        }
 
-    del model
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-    return metrics
+        return metrics
+    finally:
+        if model is not None:
+            del model
+        clear_runtime_memory()
 
 
 def main():
