@@ -1,12 +1,12 @@
 % NOTE: Rewrite after experiments are complete. Replace all [TBD] markers.
 
-We presented an empirical benchmark of three open-source Time Series Foundation Models (MOMENT, Chronos, Lag-Llama) and the supervised PatchTST baseline on industrial Predictive Maintenance data, covering three public datasets: C-MAPSS turbofan degradation, Wind Turbine SCADA, and MIMII factory machinery sounds. Key experimental findings are:
+We presented an empirical benchmark of three open-source Time Series Foundation Models (MOMENT, Chronos, Lag-Llama) and the supervised PatchTST baseline on industrial Predictive Maintenance data, covering three public datasets: C-MAPSS turbofan degradation, Wind Turbine SCADA, and PHM Milling CNC tool wear monitoring. Key experimental findings are:
 
 \begin{enumerate}
     \item \textbf{Zero-shot performance}: [TBD --- fill with observed MAE/MSE values from Table~\ref{tab:zero_shot_mae}]
-    \item \textbf{Few-shot adaptation}: [TBD --- fill with improvement observed after LoRA fine-tuning from Table~\ref{tab:few_shot}]
     \item \textbf{Cross-condition transfer}: [TBD --- fill with C-MAPSS FD001$\to$FD00X transfer results from Table~\ref{tab:rul}]
     \item \textbf{Deployment efficiency}: [TBD --- fill with VRAM and latency measurements]
+    \item \textbf{Future work on adaptation}: Adapter-based few-shot tuning should only be reported once the benchmark wrappers implement real fine-tuning rather than placeholder hooks.
 \end{enumerate}
 
 These results contribute empirical evidence on the current state of TSFM readiness for industrial deployment, complementing prior work in general-purpose benchmarks~\cite{foundts2024} and domain-specific studies~\cite{dinten2025}. The consistent supervision gap observed across all models motivates further research into domain-adapted pretraining and lightweight fine-tuning strategies for industrial PdM applications.

@@ -4,14 +4,14 @@ Benchmarking Time-Series Foundation Models for Industrial Predictive Maintenance
 
 ## Overview
 
-This repository contains the code and data for evaluating Time Series Foundation Models (TSFMs) on industrial Predictive Maintenance (PdM) datasets. We benchmark 6 TSFMs across 6 industrial datasets, exposing fundamental gaps between benchmark performance and industrial applicability.
+This repository contains the code and paper assets for evaluating Time Series Foundation Models (TSFMs) on industrial Predictive Maintenance (PdM) datasets. The current runnable ICATH scope benchmarks 4 models across 3 datasets: C-MAPSS, Wind SCADA, and PHM Milling.
 
-## Key Findings
+## Current Scope
 
-- TSFMs degrade 35% MAE on non-IID industrial data vs. benchmarks
-- Zero-shot RUL fails 62% due to distribution shifts
-- SCADA preprocessing boosts cross-domain transfer 18%
-- No evaluated TSFM satisfies federated readiness checklist
+- Zero-shot evaluation is the primary validated benchmark path.
+- Cross-condition transfer on C-MAPSS is included as a core robustness study.
+- PHM Milling replaces MIMII in the Colab-friendly pipeline to keep preprocessing memory-safe.
+- Few-shot adapters for MOMENT and Lag-Llama remain exploratory and should not be reported as validated results until real parameter updates are implemented.
 
 ## Setup
 
@@ -28,19 +28,19 @@ pip install -r requirements.txt
 
 ```bash
 # Download datasets
-python -m src.data.download
+python scripts/step_01_download.py
 
 # Preprocess
-python -m src.data.preprocessing
+python scripts/step_02_preprocess.py
 
 # Run zero-shot experiments
-python -m src.experiments.run_zero_shot --models moment,chronos,patchtst --datasets cmapss
+python scripts/step_03_zero_shot.py
 
-# Run few-shot experiments
-python -m src.experiments.run_few_shot --models moment,sundial --datasets cmapss
+# Run exploratory few-shot experiments
+python scripts/step_04_few_shot.py
 
 # Run cross-domain experiments
-python -m src.experiments.run_cross_domain --models moment,patchtst --datasets cmapss,phm_milling
+python scripts/step_05_cross_condition.py
 ```
 
 ## Datasets
@@ -48,22 +48,17 @@ python -m src.experiments.run_cross_domain --models moment,patchtst --datasets c
 | Dataset | Domain | Source |
 |---------|--------|--------|
 | C-MAPSS | Turbofan | NASA |
-| PHM Milling | CNC | PHM Society |
-| PU Bearings | Rotating | Paderborn Univ. |
 | Wind SCADA | Turbines | Kaggle |
-| MIMII | Factory | Zenodo |
-| PRONOSTIA | Bearings | FEMTO-ST |
+| PHM Milling | CNC Tool Wear | PHM Society |
+
+Inactive archival dataset entries remain in the repository configuration, but the active Colab-friendly benchmark path uses the three datasets above.
 
 ## Models
 
 - MOMENT (AutonLab)
-- Sundial (Salesforce)
 - Chronos (Amazon)
-- Time-MoE
 - Lag-Llama
-- TimeGPT (Nixtla API)
 - PatchTST (baseline)
-- Autoformer (baseline)
 
 ## Citation
 

@@ -19,16 +19,16 @@ datasets:
 
   phm_milling:
     name: "PHM Milling"
-    active: false
+    active: true
     domain: "CNC Machining"
     description: "PHM Society 2010 milling machine wear dataset"
     source_url: "https://phmsociety.org/phm_competition/2010-phm-society-conference-data-challenge/"
-    num_channels: 8
+    num_channels: 7
     tasks:
-      - "anomaly_detection"
       - "forecasting"
+      - "tool_condition_monitoring"
     failure_rate: 0.15
-    total_samples: 16000
+    total_samples: 1890
 
   pu_bearings:
     name: "Paderborn University Bearings"
@@ -58,7 +58,7 @@ datasets:
 
   mimii:
     name: "MIMII"
-    active: true
+    active: false
     domain: "Factory Machinery"
     description: "Malfunctioning Industrial Machine Investigation and Inspection"
     source_url: "https://zenodo.org/record/3384388"

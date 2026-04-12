@@ -17,6 +17,7 @@ class BaseTSFMWrapper(ABC):
         self.device = device if torch.cuda.is_available() else "cpu"
         self.model = None
         self.is_loaded = False
+        self.supports_few_shot = False
 
     @abstractmethod
     def load_model(self) -> None:

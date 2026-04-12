@@ -18,7 +18,7 @@ import torch
 
 from pipeline_config import (
     PROC_DIR, RESULTS_DIR,
-    MODELS_ZERO_SHOT, CMAPSS_HORIZON, HORIZON,
+    MODELS_ZERO_SHOT, CMAPSS_HORIZON, HORIZON, PHM_MILLING_HORIZON,
     DEVICE, SEED, EVAL_BATCH_SIZE, MAX_EVAL_SAMPLES,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
@@ -98,7 +98,7 @@ def main():
     dataset_cfgs = [
         ("cmapss",     "FD001", CMAPSS_HORIZON),
         ("wind_scada", None,    HORIZON),
-        ("mimii",      None,    HORIZON),
+        ("phm_milling", None,   PHM_MILLING_HORIZON),
     ]
 
     missing_datasets = []

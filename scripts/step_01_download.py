@@ -1,5 +1,5 @@
 """
-Step 1: Download datasets (C-MAPSS, Wind SCADA, MIMII).
+Step 1: Download datasets (C-MAPSS, Wind SCADA, PHM Milling).
 
 Idempotent — skips datasets that are already present.
 Run:  python scripts/step_01_download.py
@@ -16,8 +16,7 @@ import zipfile
 from pathlib import Path
 
 from pipeline_config import (
-    RAW_DIR, MIMII_MACHINES, MIMII_ZENODO_RECORD_ID,
-    MIMII_PREFERRED_VARIANT, setup_logging, ensure_dirs, mark_step_done,
+    RAW_DIR, setup_logging, ensure_dirs, mark_step_done,
 )
 
 log = setup_logging()
@@ -35,6 +34,33 @@ def _kaggle_cmd():
 
     # Fallback for environments where only the module entry is available.
     return [sys.executable, "-m", "kaggle.cli"]
+
+
+def _flatten_single_subdir(dest: Path) -> None:
+    """Flatten a single extracted wrapper directory, if present."""
+    children = list(dest.iterdir())
+    if len(children) != 1 or not children[0].is_dir():
+        return
+
+    wrapper = children[0]
+    for item in list(wrapper.iterdir()):
+        target = dest / item.name
+        if target.exists():
+            continue
+        shutil.move(str(item), str(target))
+
+    try:
+        wrapper.rmdir()
+    except OSError:
+        pass
+
+
+def _has_phm_milling_raw(dest: Path) -> bool:
+    """Check whether PHM Milling raw files look complete enough to preprocess."""
+    csv_files = list(dest.rglob("*.csv"))
+    wear_files = [path for path in csv_files if "wear" in path.stem.lower()]
+    acquisition_files = [path for path in csv_files if "wear" not in path.stem.lower()]
+    return bool(wear_files) and len(acquisition_files) >= 10
 
 
 # ── C-MAPSS ──────────────────────────────────────────────────────────────
@@ -127,88 +153,39 @@ def download_wind_scada():
     return False
 
 
-# ── MIMII ────────────────────────────────────────────────────────────────
-def download_mimii():
-    dest = RAW_DIR / "mimii"
+# ── PHM Milling ──────────────────────────────────────────────────────────
+def download_phm_milling():
+    dest = RAW_DIR / "phm_milling"
     dest.mkdir(parents=True, exist_ok=True)
-    CHUNK = 1 << 20
 
-    zenodo_bases = [
-        f"https://zenodo.org/records/{MIMII_ZENODO_RECORD_ID}/files",
-        f"https://zenodo.org/record/{MIMII_ZENODO_RECORD_ID}/files",
-    ]
+    if _has_phm_milling_raw(dest):
+        log.info("PHM Milling already downloaded.")
+        return True
 
-    all_ok = True
-    for machine in MIMII_MACHINES:
-        machine_dir = dest / machine
-        if machine_dir.exists() and any(machine_dir.rglob("*.wav")):
-            log.info(f"MIMII/{machine} already downloaded.")
-            continue
+    slugs = ["rabahba/phm-data-challenge-2010"]
+    for slug in slugs:
+        log.info(f"Trying Kaggle dataset: {slug}")
+        try:
+            proc = subprocess.run(
+                _kaggle_cmd() + ["datasets", "download", "-d", slug,
+                                 "-p", str(dest), "--unzip"],
+                capture_output=True, text=True,
+            )
+        except Exception as e:
+            log.warning(f"Failed to launch Kaggle CLI: {e}")
+            break
 
-        candidates = list(dict.fromkeys([
-            f"{MIMII_PREFERRED_VARIANT}_{machine}.zip",
-            f"0_dB_{machine}.zip",
-            f"6_dB_{machine}.zip",
-            f"-6_dB_{machine}.zip",
-            f"{machine}.zip",
-        ]))
+        if proc.returncode == 0:
+            _flatten_single_subdir(dest)
+            if _has_phm_milling_raw(dest):
+                log.info("PHM Milling download complete.")
+                return True
 
-        downloaded = False
-        for base in zenodo_bases:
-            if downloaded:
-                break
-            for fname in candidates:
-                url = f"{base}/{fname}"
-                zip_path = dest / fname
-                log.info(f"Trying: {url}")
-                try:
-                    with urllib.request.urlopen(url, timeout=30) as resp:
-                        total = int(resp.headers.get("Content-Length", 0))
-                        free = shutil.disk_usage(dest).free
-                        if total > 0:
-                            needed = int(total * 1.1)
-                            if free < needed:
-                                raise OSError(
-                                    "Insufficient disk space for MIMII archive: "
-                                    f"need ~{needed/1e9:.2f} GB, free {free/1e9:.2f} GB"
-                                )
-                        elif free < 2 * (1 << 30):
-                            raise OSError(
-                                "Insufficient disk space for unknown-size MIMII archive "
-                                f"(free {free/1e9:.2f} GB)"
-                            )
+        log.warning(f"Failed for {slug}: {(proc.stderr or proc.stdout or '').strip()[:300]}")
 
-                        got = 0
-                        with open(zip_path, "wb") as f:
-                            while True:
-                                chunk = resp.read(CHUNK)
-                                if not chunk:
-                                    break
-                                f.write(chunk)
-                                got += len(chunk)
-                                if total > 0:
-                                    pct = min(int(got * 100 / total), 100)
-                                    print(f"\r  {pct}% ({got/1e6:.1f}/{total/1e6:.1f} MB)",
-                                          end="", flush=True)
-                    print()
-                    log.info(f"Extracting {fname} ...")
-                    with zipfile.ZipFile(zip_path, "r") as z:
-                        z.extractall(dest)
-                    zip_path.unlink(missing_ok=True)
-                    downloaded = True
-                    log.info(f"MIMII/{machine} ready.")
-                    break
-                except (urllib.error.HTTPError, urllib.error.URLError,
-                        TimeoutError, OSError) as e:
-                    if zip_path.exists():
-                        zip_path.unlink(missing_ok=True)
-                    log.warning(f"  Failed: {e}")
-
-        if not downloaded:
-            log.error(f"MIMII/{machine} download FAILED.")
-            all_ok = False
-
-    return all_ok
+    log.error("PHM Milling download failed for all automated sources.")
+    log.info("Manual: https://phmsociety.org/phm_competition/2010-phm-society-conference-data-challenge/")
+    return _has_phm_milling_raw(dest)
 
 
 # ── Verify ───────────────────────────────────────────────────────────────
@@ -217,7 +194,7 @@ def verify_downloads():
         "C-MAPSS FD001 train": RAW_DIR / "cmapss" / "train_FD001.txt",
         "C-MAPSS FD001 test":  RAW_DIR / "cmapss" / "test_FD001.txt",
         "Wind SCADA CSV":      next((RAW_DIR / "wind_scada").glob("*.csv"), None),
-        "MIMII WAV":           next((RAW_DIR / "mimii").rglob("*.wav"), None),
+        "PHM Milling CSV":     next((RAW_DIR / "phm_milling").rglob("*.csv"), None),
     }
     all_ok = True
     missing = []
@@ -240,15 +217,15 @@ def main(strict: bool = False):
 
     cmapss_ok = download_cmapss()
     wind_ok = download_wind_scada()
-    mimii_ok = download_mimii()
+    phm_ok = download_phm_milling()
 
     ok, missing = verify_downloads()
     if ok:
-        mark_step_done("step_01_download", {"datasets": ["cmapss", "wind_scada", "mimii"]})
+        mark_step_done("step_01_download", {"datasets": ["cmapss", "wind_scada", "phm_milling"]})
         log.info("Step 1 complete — all datasets available.")
     else:
         log.warning("Step 1 partial — some datasets missing (see above).")
-        log.warning(f"Download return flags: cmapss={cmapss_ok}, wind_scada={wind_ok}, mimii={mimii_ok}")
+        log.warning(f"Download return flags: cmapss={cmapss_ok}, wind_scada={wind_ok}, phm_milling={phm_ok}")
         if strict:
             raise RuntimeError(
                 "Strict mode enabled and required datasets are missing: "

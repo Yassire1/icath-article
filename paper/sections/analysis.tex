@@ -31,6 +31,6 @@ We compare model size, GPU memory footprint, and inference latency for each eval
 \begin{enumerate}
     \item Evaluate zero-shot performance on domain-specific held-out data before deployment
     \item Apply chronological train/test splitting to avoid data leakage
-    \item Consider few-shot LoRA adaptation with limited labeled data when zero-shot performance is insufficient
+    \item Consider adapter-based fine-tuning only after verifying that the implementation performs real parameter updates
     \item Select model size based on available edge compute constraints
 \end{enumerate}

@@ -18,7 +18,7 @@ import torch
 
 from pipeline_config import (
     PROC_DIR, RESULTS_DIR,
-    MODELS_FEW_SHOT, CMAPSS_HORIZON, HORIZON,
+    MODELS_FEW_SHOT, CMAPSS_HORIZON, HORIZON, PHM_MILLING_HORIZON,
     LORA_R, LORA_ALPHA, LORA_EPOCHS, LORA_LR, TRAIN_RATIO,
     DEVICE, SEED, EVAL_BATCH_SIZE, MAX_EVAL_SAMPLES, MAX_FEW_SHOT_SAMPLES,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
@@ -51,6 +51,10 @@ def run_few_shot(model_name, X_train, y_train, X_test, y_test, horizon):
     y_few = torch.FloatTensor(y_train[:n_few])
 
     model = get_model(model_name, device=DEVICE)
+    if not getattr(model, "supports_few_shot", False):
+        raise NotImplementedError(
+            f"{model_name} few-shot adaptation is not implemented in this repository."
+        )
     model.load_model()
     log.info(f"    Few-shot adapting on {n_few} samples ...")
     model.few_shot_adapt(
@@ -100,7 +104,7 @@ def main():
     dataset_cfgs = [
         ("cmapss",     "FD001", CMAPSS_HORIZON),
         ("wind_scada", None,    HORIZON),
-        ("mimii",      None,    HORIZON),
+        ("phm_milling", None,   PHM_MILLING_HORIZON),
     ]
 
     total = 0
@@ -144,6 +148,15 @@ def main():
             except Exception as e:
                 log.error(f"    ERROR: {e}")
                 traceback.print_exc()
+                error_record = {
+                    "model": model_name,
+                    "dataset": ds_label,
+                    "scenario": "few_shot",
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+                with open(json_path, "w") as f:
+                    json.dump(error_record, f, indent=2)
                 failed += 1
 
     mark_step_done("step_04_few_shot", {

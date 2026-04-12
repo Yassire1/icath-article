@@ -1,17 +1,16 @@
 """
-Step 2: Preprocess all datasets (C-MAPSS, Wind SCADA, MIMII).
+Step 2: Preprocess all datasets (C-MAPSS, Wind SCADA, PHM Milling).
 
 - C-MAPSS: all four subsets (FD001-FD004), RUL task
 - Wind SCADA: generic CSV, forecasting task
-- MIMII: WAV → MFCC → sliding-window, forecasting task
-  Uses chunked processing to stay within RAM limits.
+- PHM Milling: stream raw cut CSVs, summarize each cut into compact features,
+    then build cut-level forecasting windows without crossing cutter boundaries.
 
 Idempotent — skips datasets whose processed_data.pt already exists.
 Run:  python scripts/step_02_preprocess.py
 """
 
-import gc
-import tempfile
+import re
 import warnings
 from pathlib import Path
 
@@ -23,14 +22,38 @@ from pipeline_config import (
     RAW_DIR, PROC_DIR,
     CMAPSS_SUBSETS, CMAPSS_LOOKBACK, CMAPSS_HORIZON,
     LOOKBACK, HORIZON, SEED,
-    MIMII_MACHINES, MIMII_MAX_FILES, MIMII_N_MFCC,
-    MIMII_SR, MIMII_N_FFT, MIMII_HOP, DATASETS,
+    PHM_MILLING_LOOKBACK, PHM_MILLING_HORIZON, PHM_MILLING_CHUNK_ROWS,
+    DATASETS,
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.data.preprocessing import SCADAPreprocessor
 
 warnings.filterwarnings("ignore")
 log = setup_logging()
+
+PHM_SENSOR_NAMES = [
+    "force_x",
+    "force_y",
+    "force_z",
+    "vibration_x",
+    "vibration_y",
+    "vibration_z",
+    "ae_rms",
+]
+CUTTER_RE = re.compile(r"(c\d+)", re.IGNORECASE)
+DIGIT_RE = re.compile(r"(\d+)")
+
+
+def _cat_or_empty(arrays, tail_shape):
+    if arrays:
+        return torch.FloatTensor(np.concatenate(arrays, axis=0))
+    return torch.empty((0, *tail_shape), dtype=torch.float32)
+
+
+def _stack_or_empty(windows, tail_shape):
+    if windows:
+        return np.asarray(windows, dtype=np.float32)
+    return np.empty((0, *tail_shape), dtype=np.float32)
 
 
 # ── C-MAPSS ──────────────────────────────────────────────────────────────
@@ -104,125 +127,258 @@ def preprocess_wind_scada() -> dict:
     return data
 
 
-# ── MIMII ────────────────────────────────────────────────────────────────
-def preprocess_mimii() -> dict:
-    """Process MIMII WAV files → MFCC timeline → sliding windows.
+# ── PHM Milling ──────────────────────────────────────────────────────────
+def _infer_cutter_id(path: Path):
+    for candidate in [path.stem, path.parent.name, *[parent.name for parent in path.parents[:3]]]:
+        match = CUTTER_RE.search(candidate)
+        if match:
+            return match.group(1).lower()
+    return None
 
-    Uses chunked WAV loading to keep peak RAM usage low.
-    """
-    import librosa
 
-    mimii_raw = RAW_DIR / "mimii"
-    out_dir = PROC_DIR / "mimii"
+def _cut_sort_key(path: Path):
+    digits = DIGIT_RE.findall(path.stem)
+    if digits:
+        return (0, int(digits[-1]), path.name.lower())
+    return (1, path.name.lower())
+
+
+def _iter_numeric_chunks(csv_path: Path):
+    read_attempts = [
+        {"header": None, "chunksize": PHM_MILLING_CHUNK_ROWS},
+        {"header": None, "sep": r"[,\s]+", "engine": "python", "chunksize": PHM_MILLING_CHUNK_ROWS},
+    ]
+
+    last_error = None
+    for kwargs in read_attempts:
+        try:
+            reader = pd.read_csv(csv_path, **kwargs)
+            first = next(reader)
+        except StopIteration:
+            return
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        first = first.apply(pd.to_numeric, errors="coerce").dropna(axis=1, how="all")
+        if first.shape[1] <= 1 and "sep" not in kwargs:
+            continue
+
+        yield first
+        for chunk in reader:
+            numeric = chunk.apply(pd.to_numeric, errors="coerce").dropna(axis=1, how="all")
+            if not numeric.empty:
+                yield numeric
+        return
+
+    if last_error is not None:
+        raise last_error
+    raise ValueError(f"Could not parse numeric cut file: {csv_path}")
+
+
+def _summarize_cut_file(csv_path: Path):
+    count = 0
+    sum_vec = None
+    sumsq_vec = None
+    min_vec = None
+    max_vec = None
+
+    for chunk in _iter_numeric_chunks(csv_path):
+        arr = chunk.to_numpy(dtype=np.float64, copy=False)
+        if arr.ndim == 1:
+            arr = arr[:, None]
+        if arr.shape[1] < len(PHM_SENSOR_NAMES):
+            continue
+
+        arr = arr[:, :len(PHM_SENSOR_NAMES)]
+        arr = arr[np.isfinite(arr).all(axis=1)]
+        if arr.size == 0:
+            continue
+
+        if sum_vec is None:
+            sum_vec = arr.sum(axis=0)
+            sumsq_vec = np.square(arr).sum(axis=0)
+            min_vec = arr.min(axis=0)
+            max_vec = arr.max(axis=0)
+        else:
+            sum_vec += arr.sum(axis=0)
+            sumsq_vec += np.square(arr).sum(axis=0)
+            min_vec = np.minimum(min_vec, arr.min(axis=0))
+            max_vec = np.maximum(max_vec, arr.max(axis=0))
+        count += arr.shape[0]
+
+    if count == 0 or sum_vec is None:
+        return None
+
+    mean_vec = sum_vec / count
+    var_vec = np.maximum(sumsq_vec / count - np.square(mean_vec), 0.0)
+    std_vec = np.sqrt(var_vec)
+    rms_vec = np.sqrt(sumsq_vec / count)
+
+    features = {}
+    for idx, sensor_name in enumerate(PHM_SENSOR_NAMES):
+        features[f"{sensor_name}_mean"] = float(mean_vec[idx])
+        features[f"{sensor_name}_std"] = float(std_vec[idx])
+        features[f"{sensor_name}_min"] = float(min_vec[idx])
+        features[f"{sensor_name}_max"] = float(max_vec[idx])
+        features[f"{sensor_name}_rms"] = float(rms_vec[idx])
+    return features
+
+
+def _discover_phm_cutters(root: Path):
+    groups = {}
+    for csv_path in sorted(root.rglob("*.csv")):
+        cutter_id = _infer_cutter_id(csv_path)
+        if cutter_id is None:
+            continue
+        group = groups.setdefault(cutter_id, {"cuts": [], "wear": None})
+        if "wear" in csv_path.stem.lower():
+            group["wear"] = csv_path
+        else:
+            group["cuts"].append(csv_path)
+    return {cutter_id: group for cutter_id, group in groups.items() if group["cuts"]}
+
+
+def _split_forecasting_trajectory(preprocessor: SCADAPreprocessor, data: np.ndarray):
+    splits = preprocessor._chronological_split(data)
+    train_n, val_n, test_n = preprocessor._normalize(
+        splits["train"], splits["val"], splits["test"]
+    )
+
+    full_series = np.concatenate([train_n, val_n, test_n], axis=0)
+    train_end = len(train_n)
+    val_end = train_end + len(val_n)
+
+    X_train, y_train = [], []
+    X_val, y_val = [], []
+    X_test, y_test = [], []
+
+    max_start = len(full_series) - preprocessor.lookback - preprocessor.horizon + 1
+    for start in range(max(0, max_start)):
+        X_window = full_series[start:start + preprocessor.lookback]
+        y_window = full_series[
+            start + preprocessor.lookback:start + preprocessor.lookback + preprocessor.horizon
+        ]
+        target_end = start + preprocessor.lookback + preprocessor.horizon - 1
+
+        if target_end < train_end:
+            X_train.append(X_window)
+            y_train.append(y_window)
+        elif target_end < val_end:
+            X_val.append(X_window)
+            y_val.append(y_window)
+        else:
+            X_test.append(X_window)
+            y_test.append(y_window)
+
+    feature_dim = data.shape[1]
+    return (
+        _stack_or_empty(X_train, (preprocessor.lookback, feature_dim)),
+        _stack_or_empty(y_train, (preprocessor.horizon, feature_dim)),
+        _stack_or_empty(X_val, (preprocessor.lookback, feature_dim)),
+        _stack_or_empty(y_val, (preprocessor.horizon, feature_dim)),
+        _stack_or_empty(X_test, (preprocessor.lookback, feature_dim)),
+        _stack_or_empty(y_test, (preprocessor.horizon, feature_dim)),
+    )
+
+
+def preprocess_phm_milling() -> dict:
+    """Process PHM 2010 cutter data into memory-safe cut-level forecasting windows."""
+    phm_raw = RAW_DIR / "phm_milling"
+    out_dir = PROC_DIR / "phm_milling"
     sentinel = out_dir / "processed_data.pt"
 
     preprocessor = SCADAPreprocessor(
-        lookback=LOOKBACK, horizon=HORIZON,
+        lookback=PHM_MILLING_LOOKBACK, horizon=PHM_MILLING_HORIZON,
         train_ratio=0.70, val_ratio=0.15,
         normalization="standard", seed=SEED,
     )
 
     if sentinel.exists():
-        log.info("  MIMII: cached")
+        log.info("  PHM Milling: cached")
         return preprocessor.load_processed(out_dir)
 
-    all_wavs = sorted(mimii_raw.rglob("*.wav"))[:MIMII_MAX_FILES]
-    if not all_wavs:
-        log.warning("  MIMII: no WAV files found — skipping.")
+    cutter_groups = _discover_phm_cutters(phm_raw)
+    if not cutter_groups:
+        log.warning("  PHM Milling: no cutter CSV files found — skipping.")
         raise RuntimeError(
-            "MIMII raw data is missing. Step 1 must complete fully before preprocessing."
+            "PHM Milling raw data is missing. Step 1 must complete fully before preprocessing."
         )
 
-    log.info(f"  MIMII: extracting MFCC from {len(all_wavs)} WAV files (chunked) ...")
+    all_X_train, all_y_train = [], []
+    all_X_val, all_y_val = [], []
+    all_X_test, all_y_test = [], []
+    feature_tables = []
+    feature_dim = None
 
-    # ── Chunked extraction — process WAVs in batches of CHUNK_SIZE,
-    #    append MFCC frames to a memory-mapped temp file so we never
-    #    hold all raw audio + all MFCCs in RAM simultaneously.
-    CHUNK_SIZE = 50  # WAV files per chunk
+    for cutter_id, group in sorted(cutter_groups.items()):
+        cut_files = sorted(group["cuts"], key=_cut_sort_key)
+        log.info(f"  PHM Milling {cutter_id}: summarizing {len(cut_files)} cut files ...")
 
-    # First pass: compute total frames to pre-allocate.
-    # librosa uses centered STFT by default, so frame count is:
-    #   n_frames = 1 + floor(len(y) / hop_length)
-    total_frames = 0
-    for wav in all_wavs:
-        y, sr = librosa.load(wav, sr=MIMII_SR, mono=True)
-        n_frames = 1 + (len(y) // MIMII_HOP)
-        total_frames += n_frames
-        del y
-        gc.collect()
+        rows = []
+        for cut_number, cut_file in enumerate(cut_files, start=1):
+            features = _summarize_cut_file(cut_file)
+            if features is None:
+                log.warning(f"    Skipping unreadable cut file: {cut_file.name}")
+                continue
+            features["cut_index"] = cut_number
+            rows.append(features)
 
-    log.info(f"    Total MFCC frames to extract: {total_frames}")
+        if len(rows) < preprocessor.lookback + preprocessor.horizon:
+            log.warning(
+                f"    Skipping {cutter_id}: only {len(rows)} cut summaries, "
+                f"need at least {preprocessor.lookback + preprocessor.horizon}."
+            )
+            continue
 
-    # Pre-allocate numpy array on disk via memmap
-    tmp_dir = tempfile.mkdtemp(prefix="mimii_mfcc_")
-    mmap_path = Path(tmp_dir) / "mfcc_timeline.npy"
-    timeline = np.memmap(
-        mmap_path, dtype=np.float32, mode="w+",
-        shape=(total_frames, MIMII_N_MFCC),
-    )
+        feature_df = pd.DataFrame(rows).sort_values("cut_index").reset_index(drop=True)
+        feature_tables.append(feature_df.assign(cutter_id=cutter_id))
 
-    write_pos = 0
-    for chunk_start in range(0, len(all_wavs), CHUNK_SIZE):
-        chunk_wavs = all_wavs[chunk_start : chunk_start + CHUNK_SIZE]
-        for wav in chunk_wavs:
-            y, sr = librosa.load(wav, sr=MIMII_SR, mono=True)
-            mfcc = librosa.feature.mfcc(
-                y=y, sr=sr, n_mfcc=MIMII_N_MFCC,
-                n_fft=MIMII_N_FFT, hop_length=MIMII_HOP,
-            ).T  # (frames, n_mfcc)
-            n = mfcc.shape[0]
-            if write_pos + n > total_frames:
-                raise RuntimeError(
-                    "MFCC pre-allocation was too small; "
-                    "verify frame counting logic before continuing."
-                )
-            timeline[write_pos : write_pos + n] = mfcc
-            write_pos += n
-            del y, mfcc
-        gc.collect()
-        done = min(chunk_start + CHUNK_SIZE, len(all_wavs))
-        log.info(f"    Processed {done}/{len(all_wavs)} WAV files")
+        data = feature_df.drop(columns=["cut_index"]).to_numpy(dtype=np.float32)
+        feature_dim = data.shape[1]
+        X_tr, y_tr, X_va, y_va, X_te, y_te = _split_forecasting_trajectory(preprocessor, data)
 
-    timeline.flush()
+        if len(X_tr):
+            all_X_train.append(X_tr)
+            all_y_train.append(y_tr)
+        if len(X_va):
+            all_X_val.append(X_va)
+            all_y_val.append(y_va)
+        if len(X_te):
+            all_X_test.append(X_te)
+            all_y_test.append(y_te)
 
-    log.info(f"    MFCC timeline shape: ({write_pos}, {MIMII_N_MFCC})")
-
-    # Write timeline to temp CSV for process_generic_csv
-    tmp_csv = Path(tmp_dir) / "mimii_mfcc.csv"
-    # Write in chunks to avoid loading entire memmap into pandas at once
-    CSV_CHUNK = 100_000
-    header_written = False
-    for start in range(0, write_pos, CSV_CHUNK):
-        end = min(start + CSV_CHUNK, write_pos)
-        chunk_df = pd.DataFrame(timeline[start:end])
-        chunk_df.to_csv(
-            tmp_csv, index=False,
-            mode="a" if header_written else "w",
-            header=not header_written,
+        log.info(
+            f"    windows train {len(X_tr)}  val {len(X_va)}  test {len(X_te)}"
         )
-        header_written = True
-        del chunk_df
-    gc.collect()
 
-    # Free the memmap
-    del timeline
-    gc.collect()
-    mmap_path.unlink(missing_ok=True)
+    if feature_dim is None or not feature_tables:
+        raise RuntimeError(
+            "PHM Milling preprocessing did not produce any usable cut-level sequences."
+        )
 
-    log.info("    Running sliding-window preprocessing ...")
-    data = preprocessor.process_generic_csv(tmp_csv, task="forecasting")
-    preprocessor.save_processed(data, out_dir)
+    result = {
+        "train_X": _cat_or_empty(all_X_train, (preprocessor.lookback, feature_dim)),
+        "train_y": _cat_or_empty(all_y_train, (preprocessor.horizon, feature_dim)),
+        "val_X": _cat_or_empty(all_X_val, (preprocessor.lookback, feature_dim)),
+        "val_y": _cat_or_empty(all_y_val, (preprocessor.horizon, feature_dim)),
+        "test_X": _cat_or_empty(all_X_test, (preprocessor.lookback, feature_dim)),
+        "test_y": _cat_or_empty(all_y_test, (preprocessor.horizon, feature_dim)),
+        "task": "forecasting",
+        "dataset": "phm_milling",
+        "num_channels": feature_dim,
+        "lookback": preprocessor.lookback,
+        "horizon": preprocessor.horizon,
+        "cutters": sorted(cutter_groups.keys()),
+    }
 
-    # Cleanup temp files
-    tmp_csv.unlink(missing_ok=True)
-    try:
-        Path(tmp_dir).rmdir()
-    except OSError:
-        pass
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pd.concat(feature_tables, ignore_index=True).to_csv(out_dir / "cut_level_features.csv", index=False)
+    preprocessor.save_processed(result, out_dir)
 
-    log.info(f"    train {tuple(data['train_X'].shape)}  "
-             f"val {tuple(data['val_X'].shape)}  test {tuple(data['test_X'].shape)}")
-    return data
+    log.info(f"    train {tuple(result['train_X'].shape)}  "
+             f"val {tuple(result['val_X'].shape)}  test {tuple(result['test_X'].shape)}")
+    return result
 
 
 # ── Main entry ───────────────────────────────────────────────────────────
@@ -235,9 +391,9 @@ def main():
 
     cmapss_data = preprocess_cmapss() if "cmapss" in DATASETS else {}
     scada_data  = preprocess_wind_scada() if "wind_scada" in DATASETS else {}
-    mimii_data  = preprocess_mimii() if "mimii" in DATASETS else {}
+    phm_data    = preprocess_phm_milling() if "phm_milling" in DATASETS else {}
 
-    if not (cmapss_data or scada_data or mimii_data):
+    if not (cmapss_data or scada_data or phm_data):
         raise RuntimeError(
             "No datasets were preprocessed. Ensure step 1 downloaded raw data into data/raw/."
         )
@@ -245,7 +401,7 @@ def main():
     summary = {
         "cmapss_subsets": list(cmapss_data.keys()) if cmapss_data else [],
         "wind_scada": bool(scada_data),
-        "mimii": bool(mimii_data),
+        "phm_milling": bool(phm_data),
     }
     mark_step_done("step_02_preprocess", summary)
     log.info("Step 2 complete.")

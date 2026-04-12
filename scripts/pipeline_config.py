@@ -55,16 +55,21 @@ PATCHTST_BATCH_SIZE = 32
 PATCHTST_WINDOWS_BATCH_SIZE = 128
 
 # Datasets
-DATASETS = ["cmapss", "wind_scada", "mimii"]
+DATASETS = ["cmapss", "wind_scada", "phm_milling"]
 
 # C-MAPSS
 CMAPSS_SUBSETS   = ["FD001", "FD002", "FD003", "FD004"]
 CMAPSS_LOOKBACK  = 64
 CMAPSS_HORIZON   = 30
 
-# Wind SCADA + MIMII
+# Wind SCADA
 LOOKBACK = 512
 HORIZON  = 96
+
+# PHM 2010 Milling (cut-level summary features)
+PHM_MILLING_LOOKBACK   = 128
+PHM_MILLING_HORIZON    = 16
+PHM_MILLING_CHUNK_ROWS = 100_000
 
 # Few-shot LoRA
 LORA_R      = 16
@@ -72,16 +77,6 @@ LORA_ALPHA  = 32
 LORA_EPOCHS = 2
 LORA_LR     = 1e-4
 TRAIN_RATIO = 0.01  # 1 %
-
-# MIMII audio
-MIMII_MACHINES          = ["fan"]
-MIMII_ZENODO_RECORD_ID  = "3384388"
-MIMII_PREFERRED_VARIANT = "6_dB"
-MIMII_MAX_FILES         = 500   # increase for full run
-MIMII_N_MFCC            = 40
-MIMII_SR                = 16_000
-MIMII_N_FFT             = 1024
-MIMII_HOP               = 512
 
 # Hardware — VM has no GPU
 DEVICE = "cpu"
@@ -127,8 +122,8 @@ def set_seeds():
 def ensure_dirs():
     """Create all output directories."""
     for d in [
-        RAW_DIR / "cmapss", RAW_DIR / "wind_scada", RAW_DIR / "mimii",
-        PROC_DIR / "cmapss", PROC_DIR / "wind_scada", PROC_DIR / "mimii",
+        RAW_DIR / "cmapss", RAW_DIR / "wind_scada", RAW_DIR / "phm_milling",
+        PROC_DIR / "cmapss", PROC_DIR / "wind_scada", PROC_DIR / "phm_milling",
         RESULTS_DIR / "zero_shot",
         RESULTS_DIR / "few_shot",
         RESULTS_DIR / "cross_condition",

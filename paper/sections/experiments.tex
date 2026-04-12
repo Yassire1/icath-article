@@ -16,14 +16,12 @@ on the high-channel-count Wind SCADA data.]
 
 \subsection{Few-Shot Adaptation}
 
-Table~\ref{tab:few_shot} shows the impact of LoRA fine-tuning with 1\% of available labels
-for MOMENT and Lag-Llama (the two fine-tunable TSFMs in our evaluation). [TBD: Summarize
-gap between zero-shot and few-shot performance after experiments are complete.]
+Table~\ref{tab:few_shot} is reserved for exploratory adapter-based fine-tuning results with 1\% of available labels. It should only be populated once the open-source wrappers perform real parameter updates for MOMENT and Lag-Llama. [TBD: Summarize the gap between zero-shot and few-shot performance only if that implementation is completed.]
 
 % Table is defined in paper/tables/table4_few_shot.tex
 \input{tables/table4_few_shot}
 
-[TBD: Discuss whether the few-shot gap is consistent across datasets or varies.]
+[TBD: Discuss whether any validated few-shot gains are consistent across datasets or vary. Omit this subsection entirely if the adapter implementation remains incomplete.]
 
 \subsection{Cross-Condition Transfer on C-MAPSS}
 

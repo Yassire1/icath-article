@@ -5,7 +5,7 @@ We evaluate on three publicly available industrial PdM datasets. Table~\ref{tab:
 % Table is defined in paper/tables/table2_datasets.tex
 \input{tables/table2_datasets}
 
-The \textbf{C-MAPSS} dataset~\cite{saxena2008cmapss} contains simulated run-to-failure trajectories of turbofan engines under four operating conditions (FD001--FD004) with 21 sensor channels. \textbf{Wind SCADA} captures operational parameters from wind turbines with 52 channels including power output, wind speed, and nacelle temperatures, enabling both forecasting and anomaly detection tasks. \textbf{MIMII}~\cite{mimii2019} provides audio recordings of industrial machines (fans, pumps, sliders, valves) converted to mel-spectrograms for anomaly detection evaluation.
+The \textbf{C-MAPSS} dataset~\cite{saxena2008cmapss} contains simulated run-to-failure trajectories of turbofan engines under four operating conditions (FD001--FD004) with 21 sensor channels. \textbf{Wind SCADA} captures operational parameters from wind turbines with 52 channels including power output, wind speed, and nacelle temperatures, enabling multivariate forecasting evaluation. \textbf{PHM Milling}~\cite{phm2010milling} contains high-speed CNC milling runs with force, vibration, and acoustic-emission measurements recorded for successive tool cuts. In our pipeline, each raw cut file is summarized into compact statistical features so the resulting cut-level sequence remains memory-safe on commodity Colab hardware.
 
 \subsection{Models}
 
@@ -17,7 +17,7 @@ We evaluate three open-source TSFMs and one supervised baseline:
     \item \textbf{PatchTST}~\cite{nie2022patchtst}: Supervised patch-based transformer baseline (ICLR 2023)
 \end{itemize}
 
-Table~\ref{tab:capabilities} summarizes the key capabilities of each model. All three TSFMs support zero-shot inference; MOMENT and Lag-Llama additionally support LoRA fine-tuning.
+Table~\ref{tab:capabilities} summarizes the key capabilities of each model. All three TSFMs support zero-shot inference in our benchmark. We retain an exploratory few-shot adapter interface in the codebase, but only zero-shot and cross-condition results are considered fully validated until stable fine-tuning implementations are available.
 
 \subsection{Preprocessing Pipeline}
 
@@ -29,18 +29,18 @@ Our preprocessing pipeline addresses key challenges in industrial time series da
 
 \textbf{Missing Value Imputation:} Forward-fill followed by linear interpolation, with column-mean fallback for persistent gaps.
 
-\textbf{Sequence Construction:} Sliding window with lookback 512 and forecast horizon 96, matching the MOMENT and Chronos context length.
+\textbf{Sequence Construction:} Sliding windows are constructed per trajectory with chronological split boundaries preserved. Wind SCADA uses lookback 512 and forecast horizon 96, while PHM Milling uses a shorter cut-level context (128 / 16) after streaming feature summarization.
 
 \textbf{RUL Labeling:} Piecewise linear RUL labels capped at 125 cycles following the standard C-MAPSS protocol.
 
 \subsection{Evaluation Protocol}
 
-We evaluate models across two scenarios:
+We evaluate models across two primary scenarios:
 
 \textbf{Zero-Shot:} Direct inference without any task-specific adaptation, testing the transfer capability of TSFMs on unseen industrial data.
 
-\textbf{Few-Shot:} LoRA~\cite{hu2021lora} adaptation using 1\% of training data ($r=16$, $\alpha=32$), applied to MOMENT and Lag-Llama only.
+\textbf{Exploratory Few-Shot:} Adapter-based fine-tuning using 1\% of training data is retained as a future extension, but should only be reported in the final manuscript once the open-source wrappers perform real parameter updates.
 
 We additionally report \textbf{cross-condition transfer} on C-MAPSS, training on FD001 and evaluating on FD002--FD004.
 
-Metrics reported: MAE and MSE for forecasting; F1-score and AUC-ROC for anomaly detection.
+Metrics reported: MAE, RMSE, and MAPE for forecasting-style evaluations. Chronos is univariate; for multivariate inputs we average channels before inference and broadcast the forecast back to channel dimensions for a controlled comparison.

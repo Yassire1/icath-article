@@ -6,10 +6,10 @@ While these models demonstrate promising results on standard benchmarks, their e
 
 \subsection{Industrial Predictive Maintenance Benchmarks}
 
-Industrial PdM has a rich history of benchmark datasets. The C-MAPSS dataset~\cite{saxena2008cmapss}, developed by NASA, provides simulated turbofan engine degradation data and has become the de facto standard for RUL prediction research. MIMII~\cite{mimii2019} provides audio-based anomaly detection for factory machinery.
+Industrial PdM has a rich history of benchmark datasets. The C-MAPSS dataset~\cite{saxena2008cmapss}, developed by NASA, provides simulated turbofan engine degradation data and has become the de facto standard for RUL prediction research. The PHM 2010 milling benchmark~\cite{phm2010milling} provides multi-sensor cutter monitoring data for CNC tool wear analysis, complementing C-MAPSS with a real machining process.
 
 Prior work has primarily focused on traditional deep learning approaches such as LSTMs~\cite{zhao2019lstm}, CNNs~\cite{zheng2017cnn}, and more recently, transformer-based models like PatchTST~\cite{nie2022patchtst} and Autoformer~\cite{wu2021autoformer}.
 
 \subsection{Benchmarking Efforts and Positioning}
 
-Recent benchmarking efforts have evaluated TSFMs at scale. FoundTS~\cite{foundts2024} provided a unified framework covering forecasting tasks, while GIFT-Eval~\cite{gifteval2024} introduced a generalizable evaluation framework. Most directly related to our work, Dinten and Zorrilla~\cite{dinten2025} evaluated TSFMs specifically for C-MAPSS RUL prediction. Our contribution complements these works by extending the evaluation to multiple open-source TSFMs across three distinct industrial sensor modalities (turbofan degradation, SCADA monitoring, and acoustic anomaly detection) with a focus on practical deployment considerations.
+Recent benchmarking efforts have evaluated TSFMs at scale. FoundTS~\cite{foundts2024} provided a unified framework covering forecasting tasks, while GIFT-Eval~\cite{gifteval2024} introduced a generalizable evaluation framework. Most directly related to our work, Dinten and Zorrilla~\cite{dinten2025} evaluated TSFMs specifically for C-MAPSS RUL prediction. Our contribution complements these works by extending the evaluation to multiple open-source TSFMs across three distinct industrial sensor modalities (turbofan degradation, SCADA monitoring, and CNC milling tool wear) with a focus on practical deployment considerations.

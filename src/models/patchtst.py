@@ -27,6 +27,7 @@ class PatchTSTWrapper(BaseTSFMWrapper):
         self.horizon = horizon
         self.n_channels = n_channels
         self.config = kwargs
+        self.supports_few_shot = True
 
     def load_model(self) -> None:
         """Load PatchTST from neuralforecast"""

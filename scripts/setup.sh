@@ -24,8 +24,8 @@ pip install momentfm --no-deps || true
 pip install git+https://github.com/amazon-science/chronos-forecasting.git || true
 
 echo "Creating directory structure..."
-mkdir -p data/raw/{cmapss,phm_milling,pu_bearings,wind_scada,mimii,pronostia}
-mkdir -p data/processed/{cmapss,phm_milling,pu_bearings,wind_scada,mimii,pronostia}
+mkdir -p data/raw/{cmapss,phm_milling,pu_bearings,wind_scada,pronostia}
+mkdir -p data/processed/{cmapss,phm_milling,pu_bearings,wind_scada,pronostia}
 mkdir -p results/{zero_shot,few_shot,cross_domain,tables,figures}
 mkdir -p paper/{sections,figures,tables}
 mkdir -p src/{data,models,evaluation,experiments,visualization}
