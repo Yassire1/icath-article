@@ -38,7 +38,7 @@ RUN_CROSS_CONDITION = True
 
 # Models
 MODELS_ZERO_SHOT = ["moment", "chronos", "lag_llama", "patchtst"]
-MODELS_FEW_SHOT  = ["moment", "lag_llama"]   # only LoRA-capable models
+MODELS_FEW_SHOT  = ["moment", "lag_llama"]   # models with few-shot adaptation support
 MODEL_IDS = {
     "moment": "AutonLab/MOMENT-1-small",
     "chronos": "amazon/chronos-t5-tiny",
@@ -71,7 +71,7 @@ PHM_MILLING_LOOKBACK   = 128
 PHM_MILLING_HORIZON    = 16
 PHM_MILLING_CHUNK_ROWS = 100_000
 
-# Few-shot LoRA
+# Few-shot adaptation hyperparameters
 LORA_R      = 16
 LORA_ALPHA  = 32
 LORA_EPOCHS = 2

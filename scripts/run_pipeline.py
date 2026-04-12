@@ -29,7 +29,7 @@ STEPS = [
     (1, "step_01_download",        "Download datasets"),
     (2, "step_02_preprocess",      "Preprocess datasets"),
     (3, "step_03_zero_shot",       "Zero-shot experiments"),
-    (4, "step_04_few_shot",        "Few-shot LoRA experiments"),
+    (4, "step_04_few_shot",        "Few-shot adaptation experiments"),
     (5, "step_05_cross_condition", "Cross-condition transfer"),
     (6, "step_06_profile",         "Inference profiling"),
     (7, "step_07_aggregate",       "Aggregate results → CSV"),

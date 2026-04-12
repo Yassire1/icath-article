@@ -1,13 +1,14 @@
 """
-Step 4: Few-shot LoRA experiments.
+Step 4: Few-shot adaptation experiments.
 
-Adapts LoRA-capable models (MOMENT, Lag-Llama) on 1 % of training data,
-then evaluates on the test set.
+Fits lightweight few-shot adapters for the configured models on 1 % of
+training data, then evaluates on the test set.
 
 Idempotent — skips pairs whose JSON result already exists.
 Run:  python scripts/step_04_few_shot.py
 """
 
+import gc
 import json
 import traceback
 from datetime import datetime
@@ -28,6 +29,55 @@ from src.models import get_model
 log = setup_logging()
 
 RES_FS = RESULTS_DIR / "few_shot"
+FEW_SHOT_BATCH_SIZES = {
+    "moment": 4,
+    "lag_llama": 8,
+    "patchtst": 16,
+}
+
+
+def clear_runtime_memory():
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        try:
+            torch.cuda.ipc_collect()
+        except RuntimeError:
+            pass
+
+
+def is_cuda_oom(exc: Exception) -> bool:
+    if isinstance(exc, torch.cuda.OutOfMemoryError):
+        return True
+    return "out of memory" in str(exc).lower()
+
+
+def batched_few_shot_predict(model_name, model, X_test, horizon):
+    if len(X_test) == 0:
+        raise ValueError("X_test is empty; nothing to evaluate.")
+
+    batch_size = min(FEW_SHOT_BATCH_SIZES.get(model_name, EVAL_BATCH_SIZE), len(X_test))
+    pred_chunks = []
+    start = 0
+
+    while start < len(X_test):
+        stop = min(start + batch_size, len(X_test))
+        batch = torch.FloatTensor(X_test[start:stop])
+        try:
+            results = model.predict(batch, horizon=horizon)
+            pred_chunks.append(results["predictions"])
+            start = stop
+        except Exception as exc:
+            if not is_cuda_oom(exc) or batch_size == 1:
+                raise
+            clear_runtime_memory()
+            batch_size = max(1, batch_size // 2)
+            log.warning(f"    CUDA OOM at batch {stop - start}; retrying with batch_size={batch_size}")
+        finally:
+            del batch
+            clear_runtime_memory()
+
+    return np.concatenate(pred_chunks, axis=0)
 
 
 def load_dataset(name, subset=None):
@@ -50,46 +100,46 @@ def run_few_shot(model_name, X_train, y_train, X_test, y_test, horizon):
     X_few = torch.FloatTensor(X_train[:n_few])
     y_few = torch.FloatTensor(y_train[:n_few])
 
-    model = get_model(model_name, device=DEVICE)
-    if not getattr(model, "supports_few_shot", False):
-        raise NotImplementedError(
-            f"{model_name} few-shot adaptation is not implemented in this repository."
+    model = None
+    try:
+        clear_runtime_memory()
+        model = get_model(model_name, device=DEVICE)
+        if not getattr(model, "supports_few_shot", False):
+            raise NotImplementedError(
+                f"{model_name} few-shot adaptation is not implemented in this repository."
+            )
+        model.load_model()
+        log.info(f"    Few-shot adapting on {n_few} samples ...")
+        model.few_shot_adapt(
+            X_few, y_few,
+            epochs=LORA_EPOCHS, lr=LORA_LR,
+            lora_r=LORA_R, lora_alpha=LORA_ALPHA,
+            forecast_horizon=horizon,
         )
-    model.load_model()
-    log.info(f"    Few-shot adapting on {n_few} samples ...")
-    model.few_shot_adapt(
-        X_few, y_few,
-        epochs=LORA_EPOCHS, lr=LORA_LR,
-        lora_r=LORA_R, lora_alpha=LORA_ALPHA,
-    )
 
-    pred_chunks = []
-    for start in range(0, len(X_test), EVAL_BATCH_SIZE):
-        batch = torch.FloatTensor(X_test[start:start + EVAL_BATCH_SIZE])
-        results = model.predict(batch, horizon=horizon)
-        pred_chunks.append(results["predictions"])
-    preds = np.concatenate(pred_chunks, axis=0)
+        preds = batched_few_shot_predict(model_name, model, X_test, horizon)
 
-    y = y_test
-    if y.ndim == 1:
-        preds_flat = preds.reshape(preds.shape[0], -1).mean(axis=1)
-        y_flat = y
-    else:
-        min_h = min(preds.shape[1], y.shape[1] if y.ndim > 1 else horizon)
-        preds_flat = preds[:, :min_h].flatten()
-        y_flat = y[:, :min_h].flatten()
+        y = y_test
+        if y.ndim == 1:
+            preds_flat = preds.reshape(preds.shape[0], -1).mean(axis=1)
+            y_flat = y
+        else:
+            min_h = min(preds.shape[1], y.shape[1] if y.ndim > 1 else horizon)
+            preds_flat = preds[:, :min_h].flatten()
+            y_flat = y[:, :min_h].flatten()
 
-    metrics = {
-        "mae":  float(np.mean(np.abs(y_flat - preds_flat))),
-        "rmse": float(np.sqrt(np.mean((y_flat - preds_flat) ** 2))),
-        "mape": float(np.mean(np.abs((y_flat - preds_flat) / (np.abs(y_flat) + 1e-8))) * 100),
-        "train_samples": n_few,
-    }
+        metrics = {
+            "mae":  float(np.mean(np.abs(y_flat - preds_flat))),
+            "rmse": float(np.sqrt(np.mean((y_flat - preds_flat) ** 2))),
+            "mape": float(np.mean(np.abs((y_flat - preds_flat) / (np.abs(y_flat) + 1e-8))) * 100),
+            "train_samples": n_few,
+        }
 
-    del model
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-    return metrics
+        return metrics
+    finally:
+        if model is not None:
+            del model
+        clear_runtime_memory()
 
 
 def main():
@@ -98,7 +148,7 @@ def main():
     RES_FS.mkdir(parents=True, exist_ok=True)
 
     log.info("=" * 60)
-    log.info("STEP 4: Few-Shot LoRA Experiments")
+    log.info("STEP 4: Few-Shot Adaptation Experiments")
     log.info("=" * 60)
 
     dataset_cfgs = [
