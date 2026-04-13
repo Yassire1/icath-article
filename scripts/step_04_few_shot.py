@@ -32,6 +32,7 @@ log = setup_logging()
 RES_FS = RESULTS_DIR / "few_shot"
 FEW_SHOT_BATCH_SIZES = {
     "moment": 4,
+    "chronos": 16,
     "lag_llama": 8,
     "patchtst": 16,
 }

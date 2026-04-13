@@ -38,7 +38,7 @@ RUN_CROSS_CONDITION = True
 
 # Models
 MODELS_ZERO_SHOT = ["moment", "chronos", "lag_llama", "patchtst"]
-MODELS_FEW_SHOT  = ["moment", "lag_llama"]   # models with few-shot adaptation support
+MODELS_FEW_SHOT  = ["moment", "chronos", "lag_llama", "patchtst"]
 MODEL_IDS = {
     "moment": "AutonLab/MOMENT-1-small",
     "chronos": "amazon/chronos-t5-tiny",
