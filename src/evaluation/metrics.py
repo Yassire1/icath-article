@@ -18,6 +18,9 @@ from sklearn.metrics import (
 from scipy import stats
 
 
+FORECAST_METRIC_VERSION = "robust_mape_v2"
+
+
 def mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Mean Absolute Error"""
     return mean_absolute_error(y_true.flatten(), y_pred.flatten())
@@ -34,8 +37,26 @@ def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
 
 def mape(y_true: np.ndarray, y_pred: np.ndarray, epsilon: float = 1e-8) -> float:
-    """Mean Absolute Percentage Error"""
-    return np.mean(np.abs((y_true - y_pred) / (np.abs(y_true) + epsilon))) * 100
+    """Mean Absolute Percentage Error with a robust denominator floor.
+
+    Industrial targets can legitimately hit or cross zero (for example near-end
+    RUL windows or standardized signals). Plain MAPE becomes numerically
+    meaningless in that regime, so we floor the denominator using the 5th
+    percentile of non-zero target magnitudes.
+    """
+    y_true = np.asarray(y_true, dtype=np.float64).flatten()
+    y_pred = np.asarray(y_pred, dtype=np.float64).flatten()
+
+    abs_true = np.abs(y_true)
+    non_zero = abs_true[np.isfinite(abs_true) & (abs_true > epsilon)]
+
+    if non_zero.size == 0:
+        denominator_floor = 1.0
+    else:
+        denominator_floor = max(epsilon, float(np.percentile(non_zero, 5)))
+
+    denominator = np.maximum(abs_true, denominator_floor)
+    return float(np.mean(np.abs((y_true - y_pred) / denominator)) * 100)
 
 
 def crps(y_true: np.ndarray, y_pred_samples: np.ndarray) -> float:

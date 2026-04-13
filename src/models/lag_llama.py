@@ -7,6 +7,8 @@ Installation:
     pip install git+https://github.com/time-series-foundation-models/lag-llama.git
 """
 
+import pickle
+
 import torch
 import numpy as np
 import pandas as pd
@@ -57,7 +59,23 @@ class LagLlamaWrapper(BaseTSFMWrapper):
             filename="lag-llama.ckpt",
         )
 
-        checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        checkpoint = None
+        try:
+            checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        except pickle.UnpicklingError as exc:
+            if "Weights only load failed" not in str(exc):
+                raise
+
+            try:
+                from gluonts.torch.distributions.studentT import StudentTOutput
+
+                if hasattr(torch.serialization, "add_safe_globals"):
+                    torch.serialization.add_safe_globals([StudentTOutput])
+            except Exception:
+                pass
+
+            checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=True)
+
         ckpt_hparams = checkpoint.get("hyper_parameters", {})
         ckpt_model_kwargs = ckpt_hparams.get("model_kwargs", {})
 

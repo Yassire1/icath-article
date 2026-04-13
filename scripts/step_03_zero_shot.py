@@ -24,14 +24,15 @@ from pipeline_config import (
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.models import get_model
-from src.data.preprocessing import SCADAPreprocessor
+from src.evaluation.metrics import FORECAST_METRIC_VERSION, compute_all_metrics
 
 log = setup_logging()
 
 RES_ZS = RESULTS_DIR / "zero_shot"
+ZERO_SHOT_RESULT_VERSION = "chronos_chunked_rollout_v1"
 MODEL_EVAL_BATCH_SIZES = {
     "moment": 4,
-    "chronos": 8,
+    "chronos": 16,
     "lag_llama": 16,
     "patchtst": 16,
 }
@@ -116,18 +117,14 @@ def run_zero_shot(model_name, dataset_name, X_train, y_train, X_test, y_test, ho
 
         y = y_test
         if y.ndim == 1:
-            preds_flat = preds.reshape(preds.shape[0], -1).mean(axis=1)
-            y_flat = y
+            preds_eval = preds.reshape(preds.shape[0], -1).mean(axis=1)
+            y_eval = y
         else:
             min_h = min(preds.shape[1], y.shape[1] if y.ndim > 1 else horizon)
-            preds_flat = preds[:, :min_h].flatten()
-            y_flat = y[:, :min_h].flatten() if y.ndim > 1 else y.flatten()
+            preds_eval = preds[:, :min_h]
+            y_eval = y[:, :min_h] if y.ndim > 1 else y
 
-        metrics = {
-            "mae":  float(np.mean(np.abs(y_flat - preds_flat))),
-            "rmse": float(np.sqrt(np.mean((y_flat - preds_flat) ** 2))),
-            "mape": float(np.mean(np.abs((y_flat - preds_flat) / (np.abs(y_flat) + 1e-8))) * 100),
-        }
+        metrics = compute_all_metrics(y_eval, preds_eval, task="forecasting")
 
         return metrics
     finally:
@@ -172,11 +169,17 @@ def main():
             json_path = RES_ZS / f"{key}.json"
 
             if json_path.exists():
-                log.info(f"  [cached] {key}")
                 with open(json_path) as f:
-                    zero_shot_results[key] = json.load(f)
-                skipped += 1
-                continue
+                    cached_record = json.load(f)
+                if (
+                    cached_record.get("metric_version") == FORECAST_METRIC_VERSION
+                    and cached_record.get("result_version") == ZERO_SHOT_RESULT_VERSION
+                ):
+                    log.info(f"  [cached] {key}")
+                    zero_shot_results[key] = cached_record
+                    skipped += 1
+                    continue
+                log.info(f"  [stale cache] recomputing {key}")
 
             log.info(f"  Zero-shot: {model_name} on {ds_label}")
             try:
@@ -184,6 +187,8 @@ def main():
                 record = {
                     "model": model_name, "dataset": ds_label,
                     "scenario": "zero_shot", "metrics": metrics,
+                    "metric_version": FORECAST_METRIC_VERSION,
+                    "result_version": ZERO_SHOT_RESULT_VERSION,
                     "timestamp": datetime.now().isoformat(),
                 }
                 zero_shot_results[key] = record
@@ -194,7 +199,12 @@ def main():
                 log.error(f"    ERROR: {e}")
                 traceback.print_exc()
                 zero_shot_results[key] = {
-                    "model": model_name, "dataset": ds_label, "error": str(e),
+                    "model": model_name,
+                    "dataset": ds_label,
+                    "scenario": "zero_shot",
+                    "metric_version": FORECAST_METRIC_VERSION,
+                    "result_version": ZERO_SHOT_RESULT_VERSION,
+                    "error": str(e),
                 }
 
     mark_step_done("step_03_zero_shot", {

@@ -25,6 +25,7 @@ from pipeline_config import (
     setup_logging, ensure_dirs, set_seeds, mark_step_done,
 )
 from src.models import get_model
+from src.evaluation.metrics import FORECAST_METRIC_VERSION, compute_all_metrics
 
 log = setup_logging()
 
@@ -121,19 +122,15 @@ def run_few_shot(model_name, X_train, y_train, X_test, y_test, horizon):
 
         y = y_test
         if y.ndim == 1:
-            preds_flat = preds.reshape(preds.shape[0], -1).mean(axis=1)
-            y_flat = y
+            preds_eval = preds.reshape(preds.shape[0], -1).mean(axis=1)
+            y_eval = y
         else:
             min_h = min(preds.shape[1], y.shape[1] if y.ndim > 1 else horizon)
-            preds_flat = preds[:, :min_h].flatten()
-            y_flat = y[:, :min_h].flatten()
+            preds_eval = preds[:, :min_h]
+            y_eval = y[:, :min_h]
 
-        metrics = {
-            "mae":  float(np.mean(np.abs(y_flat - preds_flat))),
-            "rmse": float(np.sqrt(np.mean((y_flat - preds_flat) ** 2))),
-            "mape": float(np.mean(np.abs((y_flat - preds_flat) / (np.abs(y_flat) + 1e-8))) * 100),
-            "train_samples": n_few,
-        }
+        metrics = compute_all_metrics(y_eval, preds_eval, task="forecasting")
+        metrics["train_samples"] = n_few
 
         return metrics
     finally:
@@ -179,9 +176,13 @@ def main():
             json_path = RES_FS / f"{key}.json"
 
             if json_path.exists():
-                log.info(f"  [cached] {key}")
-                skipped += 1
-                continue
+                with open(json_path) as f:
+                    cached_record = json.load(f)
+                if cached_record.get("metric_version") == FORECAST_METRIC_VERSION:
+                    log.info(f"  [cached] {key}")
+                    skipped += 1
+                    continue
+                log.info(f"  [stale metrics] recomputing {key}")
 
             log.info(f"  Few-shot: {model_name} on {ds_label}")
             try:
@@ -189,6 +190,7 @@ def main():
                 record = {
                     "model": model_name, "dataset": ds_label,
                     "scenario": "few_shot", "metrics": metrics,
+                    "metric_version": FORECAST_METRIC_VERSION,
                     "timestamp": datetime.now().isoformat(),
                 }
                 with open(json_path, "w") as f:
@@ -202,6 +204,7 @@ def main():
                     "model": model_name,
                     "dataset": ds_label,
                     "scenario": "few_shot",
+                    "metric_version": FORECAST_METRIC_VERSION,
                     "error": str(e),
                     "timestamp": datetime.now().isoformat(),
                 }
