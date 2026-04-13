@@ -19,9 +19,6 @@ data/processed_root_backup_20260411/
 data/raw_root_backup_20260411/
 data/
 
-# Results (generated)
-results/
-
 # Paper (generated)
 paper/*.pdf
 paper/*.aux
