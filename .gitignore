@@ -39,7 +39,6 @@ paper/*.toc
 Thumbs.db
 
 # Secrets
-.env
 *.key
 *.pem
 
