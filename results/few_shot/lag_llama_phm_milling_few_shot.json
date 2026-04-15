@@ -1,0 +1,14 @@
+{
+  "model": "lag_llama",
+  "dataset": "phm_milling",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 3.7960166931152344,
+    "mse": 20.306116104125977,
+    "rmse": 4.506230809016109,
+    "mape": 101.61435494100618,
+    "train_samples": 32
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:25:55.167829"
+}

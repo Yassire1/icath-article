@@ -1,0 +1,14 @@
+{
+  "model": "moment",
+  "dataset": "phm_milling",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 3.7917609214782715,
+    "mse": 20.218278884887695,
+    "rmse": 4.496474050285145,
+    "mape": 102.99679134836603,
+    "train_samples": 32
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:25:42.218706"
+}

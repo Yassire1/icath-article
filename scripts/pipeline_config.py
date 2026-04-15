@@ -45,14 +45,14 @@ MODEL_IDS = {
     "lag_llama": "time-series-foundation-models/Lag-Llama",
 }
 
-# Runtime tuning for CPU-only end-to-end execution
-EVAL_BATCH_SIZE = 128
-MAX_EVAL_SAMPLES = 32
-MAX_FEW_SHOT_SAMPLES = 32
-PATCHTST_MAX_TRAIN_WINDOWS = 64
-PATCHTST_MAX_STEPS = 20
-PATCHTST_BATCH_SIZE = 32
-PATCHTST_WINDOWS_BATCH_SIZE = 128
+# Runtime tuning
+EVAL_BATCH_SIZE = int(os.environ.get("ICATH_EVAL_BATCH_SIZE", "64"))
+MAX_EVAL_SAMPLES = int(os.environ.get("ICATH_MAX_EVAL_SAMPLES", "1000000000"))
+MAX_FEW_SHOT_SAMPLES = int(os.environ.get("ICATH_MAX_FEW_SHOT_SAMPLES", "4096"))
+PATCHTST_MAX_TRAIN_WINDOWS = int(os.environ.get("ICATH_PATCHTST_MAX_TRAIN_WINDOWS", "4096"))
+PATCHTST_MAX_STEPS = int(os.environ.get("ICATH_PATCHTST_MAX_STEPS", "300"))
+PATCHTST_BATCH_SIZE = int(os.environ.get("ICATH_PATCHTST_BATCH_SIZE", "64"))
+PATCHTST_WINDOWS_BATCH_SIZE = int(os.environ.get("ICATH_PATCHTST_WINDOWS_BATCH_SIZE", "1024"))
 
 # Datasets
 DATASETS = ["cmapss", "wind_scada", "phm_milling"]
@@ -74,18 +74,27 @@ PHM_MILLING_CHUNK_ROWS = 100_000
 # Few-shot adaptation hyperparameters
 LORA_R      = 16
 LORA_ALPHA  = 32
-LORA_EPOCHS = 2
+LORA_EPOCHS = int(os.environ.get("ICATH_LORA_EPOCHS", "10"))
 LORA_LR     = 1e-4
 TRAIN_RATIO = 0.01  # 1 %
 
-# Hardware — VM has no GPU
-DEVICE = "cpu"
+# Hardware
+REQUESTED_DEVICE = os.environ.get("ICATH_DEVICE")
+if REQUESTED_DEVICE:
+    DEVICE = REQUESTED_DEVICE
+else:
+    try:
+        import torch
+        DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    except Exception:
+        DEVICE = "cpu"
+
 SEED   = 42
 
 # Profiling
-PROFILE_BATCH_SIZE = 8
-WARMUP_RUNS = 1
-TIMING_RUNS = 1
+PROFILE_BATCH_SIZE = int(os.environ.get("ICATH_PROFILE_BATCH_SIZE", "8"))
+WARMUP_RUNS = int(os.environ.get("ICATH_WARMUP_RUNS", "2"))
+TIMING_RUNS = int(os.environ.get("ICATH_TIMING_RUNS", "5"))
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────

@@ -47,3 +47,5 @@ wandb/
 
 paper_proposal*
 .env/
+
+.cache/huggingface/hub/models--AutonLab--MOMENT-1-small/blobs/785e6c6f57ffa7cac7e2a1fff6369618d49f2f441563ddea76c866231e5aa877

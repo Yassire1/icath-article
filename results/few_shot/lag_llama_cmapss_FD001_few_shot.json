@@ -1,0 +1,14 @@
+{
+  "model": "lag_llama",
+  "dataset": "cmapss/FD001",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 15.829662322998047,
+    "mse": 359.55206298828125,
+    "rmse": 18.961858110118882,
+    "mape": 93.70495437431984,
+    "train_samples": 79
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:08:46.400559"
+}

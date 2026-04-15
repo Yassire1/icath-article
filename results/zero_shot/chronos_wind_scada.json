@@ -1,0 +1,14 @@
+{
+  "model": "chronos",
+  "dataset": "wind_scada",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 0.7015150189399719,
+    "mse": 0.8102421164512634,
+    "rmse": 0.900134499089588,
+    "mape": 105.95348121415553
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T16:58:23.376000"
+}

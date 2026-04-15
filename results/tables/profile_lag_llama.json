@@ -1,0 +1,8 @@
+{
+  "model": "lag_llama",
+  "params_M": 2.4,
+  "latency_ms": 186.1,
+  "peak_gpu_mb": 50.0,
+  "batch_size": 8,
+  "device": "cuda"
+}

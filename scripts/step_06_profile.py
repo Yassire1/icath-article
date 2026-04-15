@@ -28,6 +28,27 @@ from src.models import get_model
 log = setup_logging()
 
 
+def count_model_parameters(wrapper) -> int:
+    """Best-effort parameter counting across heterogeneous wrapper internals."""
+    candidates = [
+        getattr(wrapper, "model", None),
+        getattr(getattr(wrapper, "model", None), "model", None),
+    ]
+
+    estimator = getattr(wrapper, "estimator", None)
+    if estimator is not None and hasattr(estimator, "create_lightning_module"):
+        try:
+            candidates.append(estimator.create_lightning_module())
+        except Exception:
+            pass
+
+    for candidate in candidates:
+        if candidate is not None and hasattr(candidate, "parameters"):
+            return sum(p.numel() for p in candidate.parameters())
+
+    return 0
+
+
 def load_profile_batch():
     """Load a fixed 32-sample batch from C-MAPSS FD001 for profiling."""
     path = PROC_DIR / "cmapss" / "FD001" / "processed_data.pt"
@@ -79,8 +100,7 @@ def main():
             else:
                 model.load_model()
 
-            inner = getattr(model, "model", None)
-            n_params = sum(p.numel() for p in inner.parameters()) if inner is not None else 0
+            n_params = count_model_parameters(model)
 
             # Warmup
             for _ in range(WARMUP_RUNS):

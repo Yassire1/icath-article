@@ -1,0 +1,14 @@
+{
+  "model": "patchtst",
+  "dataset": "wind_scada",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 0.6992182731628418,
+    "mse": 0.8425564765930176,
+    "rmse": 0.9179087517792919,
+    "mape": 117.76099218984332,
+    "train_samples": 347
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:25:31.466876"
+}

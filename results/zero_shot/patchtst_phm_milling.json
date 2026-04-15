@@ -1,0 +1,14 @@
+{
+  "model": "patchtst",
+  "dataset": "phm_milling",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 3.216459035873413,
+    "mse": 15.606719970703125,
+    "rmse": 3.950534137392452,
+    "mape": 233.66847735433188
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T17:04:45.123534"
+}

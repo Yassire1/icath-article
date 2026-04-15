@@ -1,0 +1,14 @@
+{
+  "model": "patchtst",
+  "dataset": "cmapss/FD001",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 15.15208911895752,
+    "mse": 338.8797302246094,
+    "rmse": 18.40868627101373,
+    "mape": 86.88078456679776,
+    "train_samples": 79
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:09:15.570728"
+}

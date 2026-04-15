@@ -1,0 +1,11 @@
+{
+  "model": "chronos",
+  "source": "FD001",
+  "target": "FD001",
+  "scenario": "cross_condition",
+  "metrics": {
+    "mae": 14.961430549621582,
+    "rmse": 18.251981735229492
+  },
+  "timestamp": "2026-04-13T17:26:17.016446"
+}

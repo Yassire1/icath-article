@@ -1,0 +1,14 @@
+{
+  "model": "chronos",
+  "dataset": "phm_milling",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 3.792011260986328,
+    "mse": 20.260297775268555,
+    "rmse": 4.5011440518237755,
+    "mape": 101.84361437537474,
+    "train_samples": 32
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:25:46.286450"
+}

@@ -1,0 +1,14 @@
+{
+  "model": "moment",
+  "dataset": "wind_scada",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 0.9038813710212708,
+    "mse": 1.1267638206481934,
+    "rmse": 1.0614913191581896,
+    "mape": 103.57334325851866,
+    "train_samples": 347
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:12:10.490854"
+}

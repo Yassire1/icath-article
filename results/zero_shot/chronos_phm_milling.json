@@ -1,0 +1,14 @@
+{
+  "model": "chronos",
+  "dataset": "phm_milling",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 3.2122550010681152,
+    "mse": 15.597286224365234,
+    "rmse": 3.9493399732569534,
+    "mape": 238.15389670661423
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T17:04:35.324284"
+}

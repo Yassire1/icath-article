@@ -1,0 +1,14 @@
+{
+  "model": "moment",
+  "dataset": "cmapss/FD001",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 15.890652656555176,
+    "mse": 361.90277099609375,
+    "rmse": 19.0237422973529,
+    "mape": 94.13339241070966
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T16:49:41.852456"
+}

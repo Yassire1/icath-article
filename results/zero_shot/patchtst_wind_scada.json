@@ -1,0 +1,14 @@
+{
+  "model": "patchtst",
+  "dataset": "wind_scada",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 0.7013115882873535,
+    "mse": 0.8502137064933777,
+    "rmse": 0.9220703370640321,
+    "mape": 119.92984990288893
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T17:04:21.120226"
+}

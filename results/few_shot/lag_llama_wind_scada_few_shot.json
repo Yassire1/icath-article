@@ -1,0 +1,14 @@
+{
+  "model": "lag_llama",
+  "dataset": "wind_scada",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 0.9028844237327576,
+    "mse": 1.1245759725570679,
+    "rmse": 1.0604602644875798,
+    "mape": 103.63476159274067,
+    "train_samples": 347
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:24:28.372849"
+}

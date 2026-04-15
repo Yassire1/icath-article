@@ -30,3 +30,322 @@
 2026-04-13 15:14:03 | INFO    | C-MAPSS already downloaded.
 2026-04-13 15:14:03 | INFO    | Wind SCADA already downloaded: T1.csv
 2026-04-13 15:14:03 | INFO    | Trying Kaggle dataset: rabahba/phm-data-challenge-2010
+2026-04-13 16:44:50 | INFO    | ============================================================
+2026-04-13 16:44:50 | INFO    | STEP 2: Preprocess Datasets
+2026-04-13 16:44:50 | INFO    | ============================================================
+2026-04-13 16:44:50 | INFO    |   C-MAPSS FD001: preprocessing ...
+2026-04-13 16:44:50 | INFO    |     train (7994, 64, 13)  val (3092, 64, 13)  test (3145, 64, 13)
+2026-04-13 16:44:50 | INFO    |   C-MAPSS FD002: preprocessing ...
+2026-04-13 16:44:51 | INFO    |     train (20867, 64, 13)  val (8060, 64, 13)  test (8192, 64, 13)
+2026-04-13 16:44:51 | INFO    |   C-MAPSS FD003: preprocessing ...
+2026-04-13 16:44:52 | INFO    |     train (10855, 64, 13)  val (3710, 64, 13)  test (3755, 64, 13)
+2026-04-13 16:44:52 | INFO    |   C-MAPSS FD004: preprocessing ...
+2026-04-13 16:44:53 | INFO    |     train (26811, 64, 13)  val (9189, 64, 13)  test (9313, 64, 13)
+2026-04-13 16:44:53 | INFO    |   Wind SCADA: preprocessing T1.csv ...
+2026-04-13 16:44:53 | INFO    |     train (34764, 512, 4)  val (6972, 512, 4)  test (6973, 512, 4)
+2026-04-13 16:44:53 | INFO    |   PHM Milling c1: summarizing 315 cut files ...
+2026-04-13 16:45:22 | INFO    |     windows train 77  val 47  test 48
+2026-04-13 16:45:22 | INFO    |   PHM Milling c2: summarizing 315 cut files ...
+2026-04-13 16:45:51 | INFO    |     windows train 77  val 47  test 48
+2026-04-13 16:45:51 | INFO    |   PHM Milling c3: summarizing 315 cut files ...
+2026-04-13 16:46:20 | INFO    |     windows train 77  val 47  test 48
+2026-04-13 16:46:20 | INFO    |   PHM Milling c4: summarizing 315 cut files ...
+2026-04-13 16:46:49 | INFO    |     windows train 77  val 47  test 48
+2026-04-13 16:46:49 | INFO    |   PHM Milling c5: summarizing 315 cut files ...
+2026-04-13 16:47:18 | INFO    |     windows train 77  val 47  test 48
+2026-04-13 16:47:18 | INFO    |   PHM Milling c6: summarizing 315 cut files ...
+2026-04-13 16:47:47 | INFO    |     windows train 77  val 47  test 48
+2026-04-13 16:47:47 | INFO    |     train (462, 128, 35)  val (282, 128, 35)  test (288, 128, 35)
+2026-04-13 16:47:47 | INFO    | Step 2 complete.
+2026-04-13 16:48:18 | INFO    | ======================================================================
+2026-04-13 16:48:18 | INFO    |   TSFM-PDM BENCHMARK PIPELINE
+2026-04-13 16:48:18 | INFO    |   Started: 2026-04-13T16:48:18.005057
+2026-04-13 16:48:18 | INFO    |   Steps:   [3, 4, 5, 6, 7, 8]
+2026-04-13 16:48:18 | INFO    | ======================================================================
+2026-04-13 16:48:18 | INFO    | 
+2026-04-13 16:48:18 | INFO    | ######################################################################
+2026-04-13 16:48:18 | INFO    | #  STEP 3: Zero-shot experiments
+2026-04-13 16:48:18 | INFO    | ######################################################################
+2026-04-13 16:48:18 | INFO    | ============================================================
+2026-04-13 16:48:18 | INFO    | STEP 3: Zero-Shot Experiments
+2026-04-13 16:48:18 | INFO    | ============================================================
+2026-04-13 16:48:18 | INFO    |   Zero-shot: moment on cmapss/FD001
+2026-04-13 16:49:41 | INFO    |     Result: {'mae': 15.890652656555176, 'mse': 361.90277099609375, 'rmse': 19.0237422973529, 'mape': 94.13339241070966}
+2026-04-13 16:49:41 | INFO    |   Zero-shot: chronos on cmapss/FD001
+2026-04-13 16:50:24 | INFO    |     Result: {'mae': 14.961389541625977, 'mse': 333.1262512207031, 'rmse': 18.251746525215147, 'mape': 86.52045725793741}
+2026-04-13 16:50:24 | INFO    |   Zero-shot: lag_llama on cmapss/FD001
+2026-04-13 16:51:27 | INFO    |     Result: {'mae': 15.186690330505371, 'mse': 340.2356872558594, 'rmse': 18.44547877545767, 'mape': 87.43306723453222}
+2026-04-13 16:51:27 | INFO    |   Zero-shot: patchtst on cmapss/FD001
+2026-04-13 16:51:27 | INFO    |   PatchTST: fitting on training split ...
+2026-04-13 16:51:58 | INFO    |     Result: {'mae': 15.071355819702148, 'mse': 336.2693176269531, 'rmse': 18.33764754888023, 'mape': 86.3251240222197}
+2026-04-13 16:51:58 | INFO    |   Zero-shot: moment on wind_scada
+2026-04-13 16:54:51 | INFO    |     Result: {'mae': 0.9089639782905579, 'mse': 1.2102309465408325, 'rmse': 1.100104970691812, 'mape': 128.3941705108438}
+2026-04-13 16:54:51 | INFO    |   Zero-shot: chronos on wind_scada
+2026-04-13 16:58:23 | INFO    |     Result: {'mae': 0.7015150189399719, 'mse': 0.8102421164512634, 'rmse': 0.900134499089588, 'mape': 105.95348121415553}
+2026-04-13 16:58:23 | INFO    |   Zero-shot: lag_llama on wind_scada
+2026-04-13 17:03:17 | INFO    |     Result: {'mae': 0.763439416885376, 'mse': 0.9785678386688232, 'rmse': 0.9892258784872257, 'mape': 127.50259324855901}
+2026-04-13 17:03:17 | INFO    |   Zero-shot: patchtst on wind_scada
+2026-04-13 17:03:17 | INFO    |   PatchTST: fitting on training split ...
+2026-04-13 17:04:21 | INFO    |     Result: {'mae': 0.7013115882873535, 'mse': 0.8502137064933777, 'rmse': 0.9220703370640321, 'mape': 119.92984990288893}
+2026-04-13 17:04:21 | INFO    |   Zero-shot: moment on phm_milling
+2026-04-13 17:04:31 | INFO    |     Result: {'mae': 3.4266724586486816, 'mse': 16.777074813842773, 'rmse': 4.095982765325408, 'mape': 88.85936063842756}
+2026-04-13 17:04:31 | INFO    |   Zero-shot: chronos on phm_milling
+2026-04-13 17:04:35 | INFO    |     Result: {'mae': 3.2122550010681152, 'mse': 15.597286224365234, 'rmse': 3.9493399732569534, 'mape': 238.15389670661423}
+2026-04-13 17:04:35 | INFO    |   Zero-shot: lag_llama on phm_milling
+2026-04-13 17:04:39 | INFO    |     Result: {'mae': 3.2499477863311768, 'mse': 15.749927520751953, 'rmse': 3.9686178350594497, 'mape': 219.15574329862778}
+2026-04-13 17:04:39 | INFO    |   Zero-shot: patchtst on phm_milling
+2026-04-13 17:04:39 | INFO    |   PatchTST: fitting on training split ...
+2026-04-13 17:04:45 | INFO    |     Result: {'mae': 3.216459035873413, 'mse': 15.606719970703125, 'rmse': 3.950534137392452, 'mape': 233.66847735433188}
+2026-04-13 17:04:45 | INFO    | Step 3 complete — 12 runs (0 cached).
+2026-04-13 17:04:45 | INFO    |   Step 3 finished in 987.1s
+2026-04-13 17:04:45 | INFO    | 
+2026-04-13 17:04:45 | INFO    | ######################################################################
+2026-04-13 17:04:45 | INFO    | #  STEP 4: Few-shot adaptation experiments
+2026-04-13 17:04:45 | INFO    | ######################################################################
+2026-04-13 17:04:45 | INFO    | ============================================================
+2026-04-13 17:04:45 | INFO    | STEP 4: Few-Shot Adaptation Experiments
+2026-04-13 17:04:45 | INFO    | ============================================================
+2026-04-13 17:04:45 | INFO    |   Few-shot: moment on cmapss/FD001
+2026-04-13 17:04:45 | INFO    |     Few-shot adapting on 79 samples ...
+2026-04-13 17:06:08 | INFO    |     Result: {'mae': 15.707145690917969, 'mse': 355.4007873535156, 'rmse': 18.852076473256616, 'mape': 92.45449045750618, 'train_samples': 79}
+2026-04-13 17:06:08 | INFO    |   Few-shot: chronos on cmapss/FD001
+2026-04-13 17:06:09 | INFO    |     Few-shot adapting on 79 samples ...
+2026-04-13 17:06:52 | INFO    |     Result: {'mae': 15.864703178405762, 'mse': 360.72186279296875, 'rmse': 18.992679189439514, 'mape': 94.05736987582702, 'train_samples': 79}
+2026-04-13 17:06:52 | INFO    |   Few-shot: lag_llama on cmapss/FD001
+2026-04-13 17:06:52 | INFO    |     Few-shot adapting on 79 samples ...
+2026-04-13 17:08:46 | INFO    |     Result: {'mae': 15.829662322998047, 'mse': 359.55206298828125, 'rmse': 18.961858110118882, 'mape': 93.70495437431984, 'train_samples': 79}
+2026-04-13 17:08:46 | INFO    |   Few-shot: patchtst on cmapss/FD001
+2026-04-13 17:08:46 | INFO    |     Few-shot adapting on 79 samples ...
+2026-04-13 17:09:15 | INFO    |     Result: {'mae': 15.15208911895752, 'mse': 338.8797302246094, 'rmse': 18.40868627101373, 'mape': 86.88078456679776, 'train_samples': 79}
+2026-04-13 17:09:15 | INFO    |   Few-shot: moment on wind_scada
+2026-04-13 17:09:16 | INFO    |     Few-shot adapting on 347 samples ...
+2026-04-13 17:12:10 | INFO    |     Result: {'mae': 0.9038813710212708, 'mse': 1.1267638206481934, 'rmse': 1.0614913191581896, 'mape': 103.57334325851866, 'train_samples': 347}
+2026-04-13 17:12:10 | INFO    |   Few-shot: chronos on wind_scada
+2026-04-13 17:12:11 | INFO    |     Few-shot adapting on 347 samples ...
+2026-04-13 17:15:40 | INFO    |     Result: {'mae': 0.8926066160202026, 'mse': 1.1052263975143433, 'rmse': 1.0512974828821495, 'mape': 103.84003148531737, 'train_samples': 347}
+2026-04-13 17:15:40 | INFO    |   Few-shot: lag_llama on wind_scada
+2026-04-13 17:15:41 | INFO    |     Few-shot adapting on 347 samples ...
+2026-04-13 17:24:28 | INFO    |     Result: {'mae': 0.9028844237327576, 'mse': 1.1245759725570679, 'rmse': 1.0604602644875798, 'mape': 103.63476159274067, 'train_samples': 347}
+2026-04-13 17:24:28 | INFO    |   Few-shot: patchtst on wind_scada
+2026-04-13 17:24:28 | INFO    |     Few-shot adapting on 347 samples ...
+2026-04-13 17:25:31 | INFO    |     Result: {'mae': 0.6992182731628418, 'mse': 0.8425564765930176, 'rmse': 0.9179087517792919, 'mape': 117.76099218984332, 'train_samples': 347}
+2026-04-13 17:25:31 | INFO    |   Few-shot: moment on phm_milling
+2026-04-13 17:25:32 | INFO    |     Few-shot adapting on 32 samples ...
+2026-04-13 17:25:42 | INFO    |     Result: {'mae': 3.7917609214782715, 'mse': 20.218278884887695, 'rmse': 4.496474050285145, 'mape': 102.99679134836603, 'train_samples': 32}
+2026-04-13 17:25:42 | INFO    |   Few-shot: chronos on phm_milling
+2026-04-13 17:25:43 | INFO    |     Few-shot adapting on 32 samples ...
+2026-04-13 17:25:46 | INFO    |     Result: {'mae': 3.792011260986328, 'mse': 20.260297775268555, 'rmse': 4.5011440518237755, 'mape': 101.84361437537474, 'train_samples': 32}
+2026-04-13 17:25:46 | INFO    |   Few-shot: lag_llama on phm_milling
+2026-04-13 17:25:46 | INFO    |     Few-shot adapting on 32 samples ...
+2026-04-13 17:25:55 | INFO    |     Result: {'mae': 3.7960166931152344, 'mse': 20.306116104125977, 'rmse': 4.506230809016109, 'mape': 101.61435494100618, 'train_samples': 32}
+2026-04-13 17:25:55 | INFO    |   Few-shot: patchtst on phm_milling
+2026-04-13 17:25:55 | INFO    |     Few-shot adapting on 32 samples ...
+2026-04-13 17:26:00 | INFO    |     Result: {'mae': 3.2434885501861572, 'mse': 15.706335067749023, 'rmse': 3.963121884039024, 'mape': 220.83658001384282, 'train_samples': 32}
+2026-04-13 17:26:00 | INFO    | Step 4 complete — 12 runs (0 cached).
+2026-04-13 17:26:00 | INFO    |   Step 4 finished in 1275.4s
+2026-04-13 17:26:00 | INFO    | 
+2026-04-13 17:26:00 | INFO    | ######################################################################
+2026-04-13 17:26:00 | INFO    | #  STEP 5: Cross-condition transfer
+2026-04-13 17:26:00 | INFO    | ######################################################################
+2026-04-13 17:26:00 | INFO    | ============================================================
+2026-04-13 17:26:00 | INFO    | STEP 5: Cross-Condition Transfer (C-MAPSS)
+2026-04-13 17:26:00 | INFO    | ============================================================
+2026-04-13 17:26:00 | INFO    |   In-domain: moment  FD001 → FD001
+2026-04-13 17:26:10 | INFO    |     Result: {'mae': 15.890687942504883, 'rmse': 19.02387809753418}
+2026-04-13 17:26:10 | INFO    |   In-domain: chronos  FD001 → FD001
+2026-04-13 17:26:17 | INFO    |     Result: {'mae': 14.961430549621582, 'rmse': 18.251981735229492}
+2026-04-13 17:26:17 | INFO    |   In-domain: lag_llama  FD001 → FD001
+2026-04-13 17:26:36 | INFO    |     Result: {'mae': 15.185806274414062, 'rmse': 18.445571899414062}
+2026-04-13 17:26:36 | INFO    |   In-domain: patchtst  FD001 → FD001
+2026-04-13 17:26:43 | INFO    |     Result: {'mae': 15.071355819702148, 'rmse': 18.337648391723633}
+2026-04-13 17:26:43 | INFO    |   Cross-condition: moment  FD001 → FD002
+2026-04-13 17:27:09 | INFO    |     Result: {'mae': 16.02603530883789, 'rmse': 19.150894165039062}
+2026-04-13 17:27:09 | INFO    |   Cross-condition: chronos  FD001 → FD002
+2026-04-13 17:27:24 | INFO    |     Result: {'mae': 15.894770622253418, 'rmse': 19.029897689819336}
+2026-04-13 17:27:24 | INFO    |   Cross-condition: lag_llama  FD001 → FD002
+2026-04-13 17:28:14 | INFO    |     Result: {'mae': 16.12881088256836, 'rmse': 19.237173080444336}
+2026-04-13 17:28:14 | INFO    |   Cross-condition: patchtst  FD001 → FD002
+2026-04-13 17:28:26 | INFO    |     Result: {'mae': 15.783552169799805, 'rmse': 18.939781188964844}
+2026-04-13 17:28:26 | INFO    |   Cross-condition: moment  FD001 → FD003
+2026-04-13 17:28:38 | INFO    |     Result: {'mae': 20.337921142578125, 'rmse': 25.222043991088867}
+2026-04-13 17:28:38 | INFO    |   Cross-condition: chronos  FD001 → FD003
+2026-04-13 17:28:45 | INFO    |     Result: {'mae': 18.387371063232422, 'rmse': 23.469629287719727}
+2026-04-13 17:28:45 | INFO    |   Cross-condition: lag_llama  FD001 → FD003
+2026-04-13 17:29:08 | INFO    |     Result: {'mae': 18.793994903564453, 'rmse': 23.846324920654297}
+2026-04-13 17:29:08 | INFO    |   Cross-condition: patchtst  FD001 → FD003
+2026-04-13 17:29:15 | INFO    |     Result: {'mae': 18.667638778686523, 'rmse': 23.72443199157715}
+2026-04-13 17:29:15 | INFO    |   Cross-condition: moment  FD001 → FD004
+2026-04-13 17:29:44 | INFO    |     Result: {'mae': 19.7963924407959, 'rmse': 24.002439498901367}
+2026-04-13 17:29:44 | INFO    |   Cross-condition: chronos  FD001 → FD004
+2026-04-13 17:30:01 | INFO    |     Result: {'mae': 19.656604766845703, 'rmse': 23.881126403808594}
+2026-04-13 17:30:01 | INFO    |   Cross-condition: lag_llama  FD001 → FD004
+2026-04-13 17:30:58 | INFO    |     Result: {'mae': 19.896717071533203, 'rmse': 24.08346939086914}
+2026-04-13 17:30:58 | INFO    |   Cross-condition: patchtst  FD001 → FD004
+2026-04-13 17:31:10 | INFO    |     Result: {'mae': 19.541902542114258, 'rmse': 23.78590202331543}
+2026-04-13 17:31:10 | INFO    | Step 5 complete — 16 runs (0 cached).
+2026-04-13 17:31:10 | INFO    |   Step 5 finished in 310.1s
+2026-04-13 17:31:10 | INFO    | 
+2026-04-13 17:31:10 | INFO    | ######################################################################
+2026-04-13 17:31:10 | INFO    | #  STEP 6: Inference profiling
+2026-04-13 17:31:10 | INFO    | ######################################################################
+2026-04-13 17:31:10 | INFO    | ============================================================
+2026-04-13 17:31:10 | INFO    | STEP 6: Inference Profiling
+2026-04-13 17:31:10 | INFO    | ============================================================
+2026-04-13 17:31:10 | INFO    |   Profiling moment ...
+2026-04-13 17:31:11 | INFO    |     params=38.5M  latency=18.7ms  peak_gpu=356.0MB
+2026-04-13 17:31:11 | INFO    |   Profiling chronos ...
+2026-04-13 17:31:12 | ERROR   |     ERROR: 'ChronosPipeline' object has no attribute 'parameters'
+2026-04-13 17:31:12 | INFO    |   Profiling lag_llama ...
+2026-04-13 17:31:13 | INFO    |     params=0.0M  latency=184.3ms  peak_gpu=50.0MB
+2026-04-13 17:31:13 | INFO    |   Profiling patchtst ...
+2026-04-13 17:31:16 | INFO    |     params=0.4M  latency=29.2ms  peak_gpu=12.0MB
+2026-04-13 17:31:16 | INFO    |   Saved efficiency_summary.csv (3 models)
+2026-04-13 17:31:16 | INFO    | Step 6 complete.
+2026-04-13 17:31:16 | INFO    |   Step 6 finished in 6.2s
+2026-04-13 17:31:16 | INFO    | 
+2026-04-13 17:31:16 | INFO    | ######################################################################
+2026-04-13 17:31:16 | INFO    | #  STEP 7: Aggregate results → CSV
+2026-04-13 17:31:16 | INFO    | ######################################################################
+2026-04-13 17:31:16 | INFO    | ============================================================
+2026-04-13 17:31:16 | INFO    | STEP 7: Aggregate Results → CSV Tables
+2026-04-13 17:31:16 | INFO    | ============================================================
+2026-04-13 17:31:16 | INFO    |   Zero-shot: 12 runs
+2026-04-13 17:31:16 | INFO    | 
+dataset    cmapss/FD001  phm_milling  wind_scada    mean
+model                                                   
+chronos         14.9614       3.2123      0.7015  6.2917
+lag_llama       15.1867       3.2499      0.7634  6.4000
+moment          15.8907       3.4267      0.9090  6.7421
+patchtst        15.0714       3.2165      0.7013  6.3297
+
+2026-04-13 17:31:16 | INFO    |   Few-shot: 12 runs
+2026-04-13 17:31:16 | INFO    | 
+dataset    cmapss/FD001  phm_milling  wind_scada    mean
+model                                                   
+chronos         15.8647       3.7920      0.8926  6.8498
+lag_llama       15.8297       3.7960      0.9029  6.8429
+moment          15.7071       3.7918      0.9039  6.8009
+patchtst        15.1521       3.2435      0.6992  6.3649
+
+2026-04-13 17:31:16 | INFO    |   ZS-vs-FS comparison: 12 rows
+2026-04-13 17:31:16 | INFO    |   Cross-condition: 16 runs
+2026-04-13 17:31:16 | INFO    | 
+target       FD001    FD002    FD003    FD004
+model                                        
+chronos    14.9614  15.8948  18.3874  19.6566
+lag_llama  15.1858  16.1288  18.7940  19.8967
+moment     15.8907  16.0260  20.3379  19.7964
+patchtst   15.0714  15.7836  18.6676  19.5419
+
+2026-04-13 17:31:16 | INFO    |   Total records: 40
+2026-04-13 17:31:16 | INFO    |   Files written: zero_shot_mae.csv, zero_shot_full.csv, few_shot_mae.csv, few_shot_full.csv, zs_vs_fs_comparison.csv, cross_condition_mae.csv, cross_condition_full.csv, all_results.csv
+2026-04-13 17:31:16 | INFO    | Step 7 complete.
+2026-04-13 17:31:16 | INFO    |   Step 7 finished in 0.0s
+2026-04-13 17:31:16 | INFO    | 
+2026-04-13 17:31:16 | INFO    | ######################################################################
+2026-04-13 17:31:16 | INFO    | #  STEP 8: Generate figures
+2026-04-13 17:31:16 | INFO    | ######################################################################
+2026-04-13 17:31:16 | INFO    | ============================================================
+2026-04-13 17:31:16 | INFO    | STEP 8: Generate Figures
+2026-04-13 17:31:16 | INFO    | ============================================================
+2026-04-13 17:31:17 | INFO    |   Saved zero_shot_mae_bar.pdf / .png
+2026-04-13 17:31:17 | INFO    |   Saved zs_vs_fs_comparison.pdf / .png
+2026-04-13 17:31:17 | INFO    |   Saved cross_condition_heatmap.pdf / .png
+2026-04-13 17:31:17 | INFO    | Step 8 complete — 6 figure files.
+2026-04-13 17:31:17 | INFO    |   Step 8 finished in 0.9s
+2026-04-13 17:31:17 | INFO    | 
+2026-04-13 17:31:17 | INFO    | ======================================================================
+2026-04-13 17:31:17 | INFO    |   PIPELINE SUMMARY
+2026-04-13 17:31:17 | INFO    | ======================================================================
+2026-04-13 17:31:17 | INFO    |   Total time: 2579.8s (43.0 min)
+2026-04-13 17:31:17 | INFO    |   All steps completed successfully.
+2026-04-13 17:31:17 | INFO    | 
+2026-04-13 17:31:17 | INFO    |   Output locations:
+2026-04-13 17:31:17 | INFO    |     data/processed/          ← preprocessed .pt tensors
+2026-04-13 17:31:17 | INFO    |     results/zero_shot/       ← per-run JSON files
+2026-04-13 17:31:17 | INFO    |     results/few_shot/        ← per-run JSON files
+2026-04-13 17:31:17 | INFO    |     results/cross_condition/ ← per-run JSON files
+2026-04-13 17:31:17 | INFO    |     results/tables/          ← aggregated CSV summaries
+2026-04-13 17:31:17 | INFO    |     results/figures/         ← PDF + PNG figures
+2026-04-13 17:31:17 | INFO    |     results/manifest.json    ← step completion tracking
+2026-04-13 17:31:17 | INFO    |     results/pipeline.log     ← full execution log
+2026-04-13 17:31:17 | INFO    | ======================================================================
+2026-04-13 17:33:57 | INFO    | ======================================================================
+2026-04-13 17:33:57 | INFO    |   TSFM-PDM BENCHMARK PIPELINE
+2026-04-13 17:33:57 | INFO    |   Started: 2026-04-13T17:33:57.039699
+2026-04-13 17:33:57 | INFO    |   Steps:   [6, 7]
+2026-04-13 17:33:57 | INFO    | ======================================================================
+2026-04-13 17:33:57 | INFO    | 
+2026-04-13 17:33:57 | INFO    | ######################################################################
+2026-04-13 17:33:57 | INFO    | #  STEP 6: Inference profiling
+2026-04-13 17:33:57 | INFO    | ######################################################################
+2026-04-13 17:33:57 | INFO    | ============================================================
+2026-04-13 17:33:57 | INFO    | STEP 6: Inference Profiling
+2026-04-13 17:33:57 | INFO    | ============================================================
+2026-04-13 17:33:57 | INFO    |   Profiling moment ...
+2026-04-13 17:33:58 | INFO    |     params=38.5M  latency=18.6ms  peak_gpu=356.0MB
+2026-04-13 17:33:58 | INFO    |   Profiling chronos ...
+2026-04-13 17:34:00 | INFO    |     params=8.4M  latency=109.3ms  peak_gpu=92.0MB
+2026-04-13 17:34:00 | INFO    |   Profiling lag_llama ...
+2026-04-13 17:34:02 | INFO    |     params=2.4M  latency=186.1ms  peak_gpu=50.0MB
+2026-04-13 17:34:02 | INFO    |   Profiling patchtst ...
+2026-04-13 17:34:06 | INFO    |     params=0.4M  latency=26.3ms  peak_gpu=12.0MB
+2026-04-13 17:34:06 | INFO    |   Saved efficiency_summary.csv (4 models)
+2026-04-13 17:34:06 | INFO    | Step 6 complete.
+2026-04-13 17:34:06 | INFO    |   Step 6 finished in 9.1s
+2026-04-13 17:34:06 | INFO    | 
+2026-04-13 17:34:06 | INFO    | ######################################################################
+2026-04-13 17:34:06 | INFO    | #  STEP 7: Aggregate results → CSV
+2026-04-13 17:34:06 | INFO    | ######################################################################
+2026-04-13 17:34:06 | INFO    | ============================================================
+2026-04-13 17:34:06 | INFO    | STEP 7: Aggregate Results → CSV Tables
+2026-04-13 17:34:06 | INFO    | ============================================================
+2026-04-13 17:34:06 | INFO    |   Zero-shot: 12 runs
+2026-04-13 17:34:06 | INFO    | 
+dataset    cmapss/FD001  phm_milling  wind_scada    mean
+model                                                   
+chronos         14.9614       3.2123      0.7015  6.2917
+lag_llama       15.1867       3.2499      0.7634  6.4000
+moment          15.8907       3.4267      0.9090  6.7421
+patchtst        15.0714       3.2165      0.7013  6.3297
+
+2026-04-13 17:34:06 | INFO    |   Few-shot: 12 runs
+2026-04-13 17:34:06 | INFO    | 
+dataset    cmapss/FD001  phm_milling  wind_scada    mean
+model                                                   
+chronos         15.8647       3.7920      0.8926  6.8498
+lag_llama       15.8297       3.7960      0.9029  6.8429
+moment          15.7071       3.7918      0.9039  6.8009
+patchtst        15.1521       3.2435      0.6992  6.3649
+
+2026-04-13 17:34:06 | INFO    |   ZS-vs-FS comparison: 12 rows
+2026-04-13 17:34:06 | INFO    |   Cross-condition: 16 runs
+2026-04-13 17:34:06 | INFO    | 
+target       FD001    FD002    FD003    FD004
+model                                        
+chronos    14.9614  15.8948  18.3874  19.6566
+lag_llama  15.1858  16.1288  18.7940  19.8967
+moment     15.8907  16.0260  20.3379  19.7964
+patchtst   15.0714  15.7836  18.6676  19.5419
+
+2026-04-13 17:34:06 | INFO    |   Total records: 40
+2026-04-13 17:34:06 | INFO    |   Files written: zero_shot_mae.csv, zero_shot_full.csv, few_shot_mae.csv, few_shot_full.csv, zs_vs_fs_comparison.csv, cross_condition_mae.csv, cross_condition_full.csv, all_results.csv
+2026-04-13 17:34:06 | INFO    | Step 7 complete.
+2026-04-13 17:34:06 | INFO    |   Step 7 finished in 0.0s
+2026-04-13 17:34:06 | INFO    | 
+2026-04-13 17:34:06 | INFO    | ======================================================================
+2026-04-13 17:34:06 | INFO    |   PIPELINE SUMMARY
+2026-04-13 17:34:06 | INFO    | ======================================================================
+2026-04-13 17:34:06 | INFO    |   Total time: 9.1s (0.2 min)
+2026-04-13 17:34:06 | INFO    |   All steps completed successfully.
+2026-04-13 17:34:06 | INFO    | 
+2026-04-13 17:34:06 | INFO    |   Output locations:
+2026-04-13 17:34:06 | INFO    |     data/processed/          ← preprocessed .pt tensors
+2026-04-13 17:34:06 | INFO    |     results/zero_shot/       ← per-run JSON files
+2026-04-13 17:34:06 | INFO    |     results/few_shot/        ← per-run JSON files
+2026-04-13 17:34:06 | INFO    |     results/cross_condition/ ← per-run JSON files
+2026-04-13 17:34:06 | INFO    |     results/tables/          ← aggregated CSV summaries
+2026-04-13 17:34:06 | INFO    |     results/figures/         ← PDF + PNG figures
+2026-04-13 17:34:06 | INFO    |     results/manifest.json    ← step completion tracking
+2026-04-13 17:34:06 | INFO    |     results/pipeline.log     ← full execution log
+2026-04-13 17:34:06 | INFO    | ======================================================================

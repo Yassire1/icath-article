@@ -1,0 +1,5 @@
+model,params_M,latency_ms,peak_gpu_mb,batch_size,device
+moment,38.5,18.6,356.0,8,cuda
+chronos,8.4,109.3,92.0,8,cuda
+lag_llama,2.4,186.1,50.0,8,cuda
+patchtst,0.4,26.3,12.0,8,cuda

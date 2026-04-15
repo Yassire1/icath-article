@@ -1,0 +1,11 @@
+{
+  "model": "lag_llama",
+  "source": "FD001",
+  "target": "FD003",
+  "scenario": "cross_condition",
+  "metrics": {
+    "mae": 18.793994903564453,
+    "rmse": 23.846324920654297
+  },
+  "timestamp": "2026-04-13T17:29:08.711568"
+}

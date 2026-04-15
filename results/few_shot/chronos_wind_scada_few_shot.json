@@ -1,0 +1,14 @@
+{
+  "model": "chronos",
+  "dataset": "wind_scada",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 0.8926066160202026,
+    "mse": 1.1052263975143433,
+    "rmse": 1.0512974828821495,
+    "mape": 103.84003148531737,
+    "train_samples": 347
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:15:40.935039"
+}

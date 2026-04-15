@@ -1,0 +1,11 @@
+{
+  "model": "moment",
+  "source": "FD001",
+  "target": "FD001",
+  "scenario": "cross_condition",
+  "metrics": {
+    "mae": 15.890687942504883,
+    "rmse": 19.02387809753418
+  },
+  "timestamp": "2026-04-13T17:26:10.639295"
+}

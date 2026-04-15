@@ -1,0 +1,14 @@
+{
+  "model": "patchtst",
+  "dataset": "cmapss/FD001",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 15.071355819702148,
+    "mse": 336.2693176269531,
+    "rmse": 18.33764754888023,
+    "mape": 86.3251240222197
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T16:51:58.227337"
+}

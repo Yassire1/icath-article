@@ -1,0 +1,11 @@
+{
+  "model": "patchtst",
+  "source": "FD001",
+  "target": "FD004",
+  "scenario": "cross_condition",
+  "metrics": {
+    "mae": 19.541902542114258,
+    "rmse": 23.78590202331543
+  },
+  "timestamp": "2026-04-13T17:31:10.610869"
+}

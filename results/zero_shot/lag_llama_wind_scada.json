@@ -1,0 +1,14 @@
+{
+  "model": "lag_llama",
+  "dataset": "wind_scada",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 0.763439416885376,
+    "mse": 0.9785678386688232,
+    "rmse": 0.9892258784872257,
+    "mape": 127.50259324855901
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T17:03:17.573058"
+}

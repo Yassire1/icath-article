@@ -1,0 +1,14 @@
+{
+  "model": "chronos",
+  "dataset": "cmapss/FD001",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 15.864703178405762,
+    "mse": 360.72186279296875,
+    "rmse": 18.992679189439514,
+    "mape": 94.05736987582702,
+    "train_samples": 79
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:06:52.122502"
+}

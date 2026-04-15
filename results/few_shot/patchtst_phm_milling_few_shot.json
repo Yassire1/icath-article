@@ -1,0 +1,14 @@
+{
+  "model": "patchtst",
+  "dataset": "phm_milling",
+  "scenario": "few_shot",
+  "metrics": {
+    "mae": 3.2434885501861572,
+    "mse": 15.706335067749023,
+    "rmse": 3.963121884039024,
+    "mape": 220.83658001384282,
+    "train_samples": 32
+  },
+  "metric_version": "robust_mape_v2",
+  "timestamp": "2026-04-13T17:26:00.493266"
+}

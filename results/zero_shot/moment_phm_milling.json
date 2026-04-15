@@ -1,0 +1,14 @@
+{
+  "model": "moment",
+  "dataset": "phm_milling",
+  "scenario": "zero_shot",
+  "metrics": {
+    "mae": 3.4266724586486816,
+    "mse": 16.777074813842773,
+    "rmse": 4.095982765325408,
+    "mape": 88.85936063842756
+  },
+  "metric_version": "robust_mape_v2",
+  "result_version": "chronos_chunked_rollout_v1",
+  "timestamp": "2026-04-13T17:04:31.343989"
+}
